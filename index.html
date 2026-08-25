@@ -641,37 +641,37 @@ input[type=number] {
                  font-family:Arial, sans-serif; background:white;">
 
         <!-- CABECERA -->
-        <div style="display:flex; background:linear-gradient(135deg, #1877f2, #0a4ec4); color:white; font-weight:bold; font-size:1.35vw;">
+        <div style="display:flex; background:linear-gradient(135deg, #1877f2, #0a4ec4); color:white; font-weight:bold; font-size:1.7vw;">
             <div style="width:24%; padding:1vw 1.2vw; display:flex; align-items:center;">Registro</div>
             <div style="width:38%; padding:1vw 1.2vw; border-left:1px solid rgba(255,255,255,0.25); text-align:center; display:flex; align-items:center; justify-content:center;">⚙ Variador de Bomba Sumergible</div>
-            <div style="width:38%; padding:1vw 1.2vw; border-left:1px solid rgba(255,255,255,0.25); text-align:center; display:flex; align-items:center; justify-content:center;">⚙ Variador de Bomba de Suministro</div>
+            <div style="width:38%; padding:1vw 1.2vw; border-left:1px solid rgba(255,255,255,0.25); text-align:center; display:flex; align-items:center; justify-content:center;">⚙ Variador de Bombas de Suministro</div>
         </div>
 
         <!-- FILA: ALARMA ACTUAL -->
         <div style="display:flex; flex:1; background:#ffffff;">
             <div style="width:24%; padding:0.8vw 1.2vw; display:flex; align-items:center; gap:0.6vw; border-left:0.35vw solid #1877f2;">
-                <span style="font-weight:bold; font-size:1.15vw; color:#1a2b4c;">Alarma Reciente</span>
+                <span style="font-weight:bold; font-size:1.6vw; color:#1a2b4c;">Alarma Reciente</span>
             </div>
-            <div id="v1AlarmaReciente" style="width:38%; padding:0.6vw 1vw; font-size:1.1vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
-            <div id="v2AlarmaReciente" style="width:38%; padding:0.6vw 1vw; font-size:1.1vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
+            <div id="v1AlarmaReciente" style="width:38%; padding:0.6vw 1vw; font-size:1.5vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
+            <div id="v2AlarmaReciente" style="width:38%; padding:0.6vw 1vw; font-size:1.5vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
         </div>
 
         <!-- FILA: ALARMA PENÚLTIMA -->
         <div style="display:flex; flex:1; background:#f7f9fc; border-top:1px solid #eef0f4;">
             <div style="width:24%; padding:0.8vw 1.2vw; display:flex; align-items:center; gap:0.6vw; border-left:0.35vw solid #22a6b3;">
-                <span style="font-weight:bold; font-size:1.15vw; color:#1a2b4c;">Alarma Anterior</span>
+                <span style="font-weight:bold; font-size:1.6vw; color:#1a2b4c;">Alarma Anterior</span>
             </div>
-            <div id="v1AlarmaAnterior" style="width:38%; padding:0.6vw 1vw; font-size:1.1vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
-            <div id="v2AlarmaAnterior" style="width:38%; padding:0.6vw 1vw; font-size:1.1vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
+            <div id="v1AlarmaAnterior" style="width:38%; padding:0.6vw 1vw; font-size:1.5vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
+            <div id="v2AlarmaAnterior" style="width:38%; padding:0.6vw 1vw; font-size:1.5vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
         </div>
 
         <!-- FILA: ALARMA ANTEPENÚLTIMA -->
         <div style="display:flex; flex:1; background:#ffffff; border-top:1px solid #eef0f4;">
             <div style="width:24%; padding:0.8vw 1.2vw; display:flex; align-items:center; gap:0.6vw; border-left:0.35vw solid #8a94a6;">
-                <span style="font-weight:bold; font-size:1.15vw; color:#1a2b4c;">Alarma Pasada</span>
+                <span style="font-weight:bold; font-size:1.6vw; color:#1a2b4c;">Alarma Pasada</span>
             </div>
-            <div id="v1Alarma2Anterior" style="width:38%; padding:0.6vw 1vw; font-size:1.1vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
-            <div id="v2Alarma2Anterior" style="width:38%; padding:0.6vw 1vw; font-size:1.1vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
+            <div id="v1Alarma2Anterior" style="width:38%; padding:0.6vw 1vw; font-size:1.5vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
+            <div id="v2Alarma2Anterior" style="width:38%; padding:0.6vw 1vw; font-size:1.5vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
         </div>
 
      </div>
@@ -1131,3 +1131,5 @@ document.querySelectorAll('.boton-mqtt').forEach(btn => {
 </script>
 </body>
 </html>
+
+
