@@ -321,8 +321,10 @@ input[type=number] {
     </div>
 
     <h2>Ingresar</h2>
-    <input id="usuario" type="text" placeholder="Usuario">
-    <input id="password" type="password" placeholder="Contraseña">
+    <input id="usuario" type="text" placeholder="Usuario"
+           onkeydown="if(event.key === 'Enter'){ login(); }">
+    <input id="password" type="password" placeholder="Contraseña"
+           onkeydown="if(event.key === 'Enter'){ login(); }">
     <button onclick="login()">Entrar</button>
     <p id="mensaje" style="color:red; margin-top:10px;"></p>
   </div>
@@ -634,7 +636,7 @@ input[type=number] {
         ALARMAS
      </div>
 
-     <div style="position:absolute; top:11%; left:6%; width:88%; height:74%;
+     <div style="position:absolute; top:9%; left:6%; width:88%; height:58%;
                  display:flex; flex-direction:column;
                  border-radius:0.9vw; overflow:hidden;
                  box-shadow:0 0.3vw 1.2vw rgba(0,0,0,0.18);
@@ -675,6 +677,44 @@ input[type=number] {
         </div>
 
      </div>
+
+     <!-- BOTONES DE RESET DE FALLA -->
+     <button class="rectangulo boton-reset-falla" data-target="resetfallavar1"
+         style="position:absolute; top:73%; left:6%; width:42.5%; height:11%; z-index:20;
+                background:linear-gradient(135deg, #ff9f1a, #e07b00);
+                color:white; border:none; border-radius:0.6vw; cursor:pointer;
+                font-size:1.3vw; font-weight:bold; display:flex; align-items:center;
+                justify-content:center; gap:0.5vw; box-shadow:0 0.2vw 0.6vw rgba(0,0,0,0.2);
+                transition: transform 0.1s ease, filter 0.1s ease;">
+         🔄 Reset Falla · Variador de Bomba Sumergible
+     </button>
+
+     <button class="rectangulo boton-reset-falla" data-target="resetfallavar2"
+         style="position:absolute; top:73%; left:51.5%; width:42.5%; height:11%; z-index:20;
+                background:linear-gradient(135deg, #ff9f1a, #e07b00);
+                color:white; border:none; border-radius:0.6vw; cursor:pointer;
+                font-size:1.3vw; font-weight:bold; display:flex; align-items:center;
+                justify-content:center; gap:0.5vw; box-shadow:0 0.2vw 0.6vw rgba(0,0,0,0.2);
+                transition: transform 0.1s ease, filter 0.1s ease;">
+         🔄 Reset Falla · Variador de Bombas de Suministro
+     </button>
+</div>
+
+<!-- ========== MODAL DE CONFIRMACIÓN CON CONTRASEÑA (RESET DE FALLA) ========== -->
+<div id="modalResetFalla" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:1vw; padding:2.5vw; width:70%; max-width:500px;
+                box-shadow:0 0.5vw 2vw rgba(0,0,0,0.3); text-align:center; font-family:Arial, sans-serif;">
+        <div style="font-size:1.8vw; font-weight:bold; color:#1a2b4c; margin-bottom:0.8vw;">🔒 Confirmar Reset de Falla</div>
+        <div id="modalResetTexto" style="font-size:1.1vw; color:#555; margin-bottom:1.2vw;">Ingresa la contraseña para continuar</div>
+        <input id="modalResetPassword" type="password" placeholder="Contraseña"
+               style="width:80%; padding:1vw; font-size:1.2vw; border:1px solid #ccc; border-radius:0.5vw; margin-bottom:0.6vw;">
+        <div id="modalResetMensaje" style="color:#d92b2b; font-size:0.95vw; min-height:1.4vw; margin-bottom:0.8vw;"></div>
+        <div style="display:flex; gap:1vw; justify-content:center;">
+            <button id="modalResetCancelar" style="padding:0.8vw 1.6vw; font-size:1.1vw; border:none; border-radius:0.5vw; background:#8a94a6; color:white; font-weight:bold; cursor:pointer;">Cancelar</button>
+            <button id="modalResetConfirmar" style="padding:0.8vw 1.6vw; font-size:1.1vw; border:none; border-radius:0.5vw; background:#0f62fe; color:white; font-weight:bold; cursor:pointer;">Confirmar</button>
+        </div>
+    </div>
 </div>
 
 <div id="navButtons" class="fullScreenContainer" style="display:none;">
@@ -1127,6 +1167,85 @@ document.querySelectorAll('.boton-mqtt').forEach(btn => {
             console.warn("⚠️ Cliente MQTT no conectado");
         }
     };
+});
+
+// =======================
+//   RESET DE FALLA (con confirmación por contraseña)
+// =======================
+// Hash SHA-256 de la clave de reset de falla — la clave real no queda escrita en el código.
+const HASH_CLAVE_RESET_FALLA = "2acee0ce6421d1b64d86cc141ef89090305ec18652dcf7d264cb034739e2c1b1";
+const modalResetFalla     = document.getElementById("modalResetFalla");
+const modalResetTexto     = document.getElementById("modalResetTexto");
+const modalResetPassword  = document.getElementById("modalResetPassword");
+const modalResetMensaje   = document.getElementById("modalResetMensaje");
+const modalResetCancelar  = document.getElementById("modalResetCancelar");
+const modalResetConfirmar = document.getElementById("modalResetConfirmar");
+
+let comandoPendienteReset = null; // guarda qué botón se está confirmando
+
+function abrirModalReset(comando, nombreVariador) {
+    comandoPendienteReset = comando;
+    modalResetTexto.innerText = "Reset Falla · " + nombreVariador;
+    modalResetPassword.value = "";
+    modalResetMensaje.innerText = "";
+    modalResetFalla.style.display = "flex";
+    modalResetPassword.focus();
+}
+
+function cerrarModalReset() {
+    modalResetFalla.style.display = "none";
+    comandoPendienteReset = null;
+}
+
+async function confirmarReset() {
+    const hashIngresado = await sha256(modalResetPassword.value.trim());
+    if (hashIngresado === HASH_CLAVE_RESET_FALLA) {
+        if (client && client.connected) {
+            client.publish(topicControl, comandoPendienteReset);
+            console.log("📤 Enviado MQTT (reset falla):", comandoPendienteReset);
+        } else {
+            console.warn("⚠️ Cliente MQTT no conectado");
+        }
+        cerrarModalReset();
+    } else {
+        modalResetMensaje.innerText = "Contraseña incorrecta";
+        modalResetPassword.value = "";
+        modalResetPassword.focus();
+    }
+}
+
+// Efecto visual de "presionado" + abrir modal
+document.querySelectorAll('.boton-reset-falla').forEach(btn => {
+    btn.addEventListener("mousedown", () => {
+        btn.style.transform = "scale(0.96)";
+        btn.style.filter = "brightness(0.9)";
+    });
+    ["mouseup", "mouseleave"].forEach(evt => {
+        btn.addEventListener(evt, () => {
+            btn.style.transform = "scale(1)";
+            btn.style.filter = "brightness(1)";
+        });
+    });
+
+    btn.addEventListener("click", () => {
+        const nombre = btn.dataset.target === "resetfallavar1"
+            ? "Variador Bomba Sumergible"
+            : "Variador Bomba de Suministro";
+        abrirModalReset(btn.dataset.target, nombre);
+    });
+});
+
+modalResetCancelar.addEventListener("click", cerrarModalReset);
+modalResetConfirmar.addEventListener("click", confirmarReset);
+
+// Permitir confirmar con Enter dentro del modal de reset
+modalResetPassword.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") confirmarReset();
+});
+
+// Cerrar el modal si se hace clic fuera del cuadro blanco
+modalResetFalla.addEventListener("click", (e) => {
+    if (e.target === modalResetFalla) cerrarModalReset();
 });
 </script>
 </body>
