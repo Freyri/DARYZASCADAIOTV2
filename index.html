@@ -1229,8 +1229,8 @@ document.querySelectorAll('.boton-reset-falla').forEach(btn => {
 
     btn.addEventListener("click", () => {
         const nombre = btn.dataset.target === "resetfallavar1"
-            ? "Variador Bomba Sumergible"
-            : "Variador Bomba de Suministro";
+            ? "Variador de Bomba Sumergible"
+            : "Variador de Bombas de Suministro";
         abrirModalReset(btn.dataset.target, nombre);
     });
 });
