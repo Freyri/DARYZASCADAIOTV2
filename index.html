@@ -13,10 +13,10 @@
   position: fixed;
   top: 15px;
   right: 15px;
-  background: transparent;   /* 👈 sin fondo */
-  color: #0f62fe;            /* 👈 solo icono azul */
+  background: transparent;
+  color: #0f62fe;
   border: none;
-  font-size: 2rem;           /* 👈 icono más bonito */
+  font-size: 2rem;
   cursor: pointer;
   z-index: 9999;
   display: block;
@@ -36,20 +36,19 @@ body {
 
 .screen {
   display: none;
-  flex-direction: column; /* si usas flex */
+  flex-direction: column;
   width: 100%;
   height: 100%;
 }
 
 #loginScreen {
-  display: flex; /* visible al inicio */
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
   height: 100%;
 }
-
 
 #loginBox {
   padding: 20px;
@@ -98,8 +97,6 @@ body {
 }
 #loginBox button:hover { background: #0984e3; }
 
-
-/* ========= PANTALLA PRINCIPAL ========= */
 #mainScreen {
   display: none;
   flex-direction: column;
@@ -134,28 +131,27 @@ body {
   object-fit: contain;
 }
 
-/* Rectángulo flotante y responsive */
 .rectangulo {
-    width: 7%;                   
-    aspect-ratio: 1.5/1;   
-    background-color: red;    
+    width: 7%;
+    aspect-ratio: 1.5/1;
+    background-color: red;
     color: white;
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 2%;     
-    font-size: 2vw;        
+    border-radius: 2%;
+    font-size: 2vw;
     font-weight: bold;
-    transition: 0.3s ease;  
-    position: absolute;     
+    transition: 0.3s ease;
+    position: absolute;
 }
 .fullScreenContainer {
-    position: fixed;   /* se fija al viewport */
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;      /* 100% del ancho del viewport */
-    height: 100vh;     /* 100% del alto del viewport */
-    overflow: hidden;  /* evita scroll si algo sobresale */
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
     z-index: 0;
 }
 
@@ -165,22 +161,21 @@ body {
     left: 0;
     width: 100%;
     height: 89%;
-    object-fit: fill; /* llena todo el contenedor, recorta si hace falta */
-    z-index: -1;       /* detrás de los botones */
+    object-fit: fill;
+    z-index: -1;
 }
 
 .overlayImg {
-    position: absolute; /* ya estaban en inline-style, pero mejor CSS */
-    z-index: 1;         /* al frente del fondo */
-    object-fit: fill; /* mantiene proporciones de la imagen */
+    position: absolute;
+    z-index: 1;
+    object-fit: fill;
 }
 .botones-container {
     z-index: 10;
 }
-/* RESPONSIVO PARA MÓVIL */
 @media (max-width: 768px) {
   .rectangulo {
-    width: 6vw; /* 10% del ancho de la pantalla */
+    width: 6vw;
     height: 10vh;
     font-size: 2.5vw;
   }
@@ -188,21 +183,16 @@ body {
 
 .textoProcesoBox {
   position: absolute;
-
   display: flex;
-  justify-content: center;    /* centra horizontal */
-  align-items: center;        /* centra vertical */
-
+  justify-content: center;
+  align-items: center;
   padding: 0.5vw 1vw;
-
   background: #0f62fe;
   border: 0.15vw solid #0a4ec4;
   border-radius: 0.3vw;
-
   box-shadow: 0 0 0.6vw rgba(0,0,0,0.25);
-
-  white-space: normal;        /* 👈 ahora sí permite multilinea */
-  text-align: center;         /* 👈 centra cada línea */
+  white-space: normal;
+  text-align: center;
 }
 .textoProceso {
   font-size: 1.2vw;
@@ -210,31 +200,25 @@ body {
   font-weight: bold;
   margin: 0;
 }
-/* === CUADRO ESPECIAL MÁS GRANDE (SOLO PARA PARAMETROS) === */
 .textoProcesoBoxGrande {
   position: absolute;
   display: flex;
   justify-content: center;
   align-items: center;
-
   padding: 0.5vw 1vw;
-
   background: #06E3E8;
   border: 1px solid #000000;
   border-radius: 0.5vw;
-
   box-shadow: 0 0 1vw rgba(0,0,0,0.25);
-
   white-space: normal;
   text-align: center;
-
-  width: 34vw;   /* 👈 MÁS ANCHO */
-  height: 6vw;   /* 👈 MÁS ALTO */
+  width: 34vw;
+  height: 6vw;
   z-index: 10;
 }
 
 .textoProcesoGrande {
-  font-size: 2vw;  /* 👈 LETRA MÁS GRANDE */
+  font-size: 2vw;
   color: black;
   font-weight: bold;
   margin: 0;
@@ -245,13 +229,11 @@ body {
   position: absolute;
   display: flex;
   flex-direction: column;
-  justify-content: center;   /* 👈 CENTRA verticalmente */
+  justify-content: center;
   align-items: flex-start;
-
   width: 28vw;
-  height: 2.4vw;             /* 👈 un poquito más alto para que respire */
-
-  padding: 12px 10px;        /* 👈 más espacio uniforme arriba/abajo */
+  height: 2.4vw;
+  padding: 12px 10px;
   background: #C2F1FA;
   border: 1px solid #000000;
   border-radius: 3px;
@@ -259,54 +241,74 @@ body {
   z-index: 10;
 }
 
-
 .textoProceso2 {
   font-size: 1.2vw;
   color: black;
   text-align: left;
   font-weight: bold;
   margin: 0;
-
   display: flex;
-  justify-content: space-between; 
-  width: 96%; /* Ajusta la separación automáticamente */
+  justify-content: space-between;
+  width: 96%;
 }
-/* ===== CUADRO TRANSPARENTE SOLO TEXTO ===== */
 .textoProcesoBoxTransparente {
   position: absolute;
   display: flex;
   justify-content: left;
   align-items: center;
-
   padding: 0.5vw 1vw;
-
-  background: transparent;      /* SIN FONDO */
-  border: none;                 /* SIN BORDE */
-  box-shadow: none;             /* SIN SOMBRA */
-
+  background: transparent;
+  border: none;
+  box-shadow: none;
   white-space: normal;
   text-align: left;
-
-  width: 34vw;                  /* igual que textoProcesoBoxGrande */
-  height: 6vw;                  /* igual que textoProcesoBoxGrande */
+  width: 34vw;
+  height: 6vw;
   z-index: 15;
 }
 
 .textoProcesoTransparente {
-  font-size: 2vw;               /* igual que textoProcesoGrande */
-  color: black;                 /* color del texto */
+  font-size: 2vw;
+  color: black;
   font-weight: bold;
   margin: 0;
   line-height: 1.2;
 }
-/* Quitar flechas de los inputs type=number */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 input[type=number] {
-    -moz-appearance: textfield; /* Firefox */
+    -moz-appearance: textfield;
+}
+
+/* ===== FLUJO DE AGUA ANIMADO (indicador de bomba encendida) ===== */
+.flow-pipe {
+    position: absolute;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    background-repeat: repeat;
+}
+.flow-pipe.activo { opacity: 1; }
+
+.flow-horizontal {
+    background-image: repeating-linear-gradient(90deg, #5687b2 0px, #5687b2 10px, transparent 10px, transparent 26px);
+    animation: flowRight 0.9s linear infinite;
+}
+.flow-vertical {
+    background-image: repeating-linear-gradient(180deg, #5687b2 0px, #5687b2 10px, transparent 10px, transparent 26px);
+    animation: flowUp 0.9s linear infinite;
+}
+@keyframes flowRight {
+    from { background-position: 0 0; }
+    to   { background-position: 26px 0; }
+}
+@keyframes flowUp {
+    from { background-position: 0 26px; }
+    to   { background-position: 0 0; }
 }
 
 </style>
@@ -348,6 +350,22 @@ input[type=number] {
       <img id="tanque2Img" src="lleno.PNG" class="overlayImg" style="display:none; top:5.8%; left:25%; width:12.8%; height:36.4%;">
       <img id="tanque3Img" src="lleno.PNG" class="overlayImg" style="display:none; top:5.8%; left:80%; width:12.8%; height:36.4%;">
       <img id="alarmaImg" src="alarma.PNG" class="overlayImg" style="display:none; top:17%; left:65%; width:4%; height:8%;">
+
+      <!-- FLUJO ANIMADO: VARIADOR 1 (bomba sumergible, tramo vertical izquierdo). Sube (la bomba empuja el agua hacia el tanque 1) -->
+      <div id="flowV1" class="flow-pipe flow-vertical" style="top:18.72%; left:5.05%; width:1.9%; height:54.10%;"></div>
+
+      <!-- FLUJO ANIMADO: TANQUE 1 <-> TANQUE 2 (vasos comunicantes: siempre hay flujo, sin importar el estado de las bombas) -->
+      <div id="flowTanque1Tanque2" class="flow-pipe flow-horizontal activo" style="top:35.68%; left:22.91%; width:1.90%; height:3.53%;"></div>
+
+      <!-- FLUJO ANIMADO: VARIADOR 2. Cada tramo va solo sobre tubo recto: corta antes de las uniones en "T" que suben/bajan a cada bomba y antes de los codos -->
+      <div id="flowV2Entrada" class="flow-pipe flow-horizontal" style="top:35.68%; left:37.88%; width:1.90%; height:3.53%;"></div>
+      <div id="flowV2Salida"  class="flow-pipe flow-horizontal" style="top:35.68%; left:60.84%; width:2.30%; height:3.53%;"></div>
+
+      <!-- FLUJO ANIMADO: salida del sensor de flujo (mismo largo que la entrada), corta antes del codo -->
+      <div id="flowV2SalidaSensor" class="flow-pipe flow-horizontal" style="top:35.68%; left:70.50%; width:2.30%; height:3.53%;"></div>
+
+      <!-- FLUJO ANIMADO: tramo vertical entre el flujómetro y el tanque 3 (entre los dos codos). Sube hacia el tanque 3 -->
+      <div id="flowV2Vertical" class="flow-pipe flow-vertical" style="top:18.17%; left:75.04%; width:1.90%; height:14.10%;"></div>
   </div>
   <div id="rect7" class="rectangulo" style="top: 59%; left: 78%; width: 12%; height: 8%; font-size:1.5vw;">BOMBA 1</div>
   <div id="rect8" class="rectangulo" style="top: 74%; left: 78%; width: 12%; height: 8%; font-size:1.5vw;">BOMBA 2</div>
@@ -483,7 +501,7 @@ input[type=number] {
     </p>
   </div>
 
-  <!-- SEGUNDO BLOQUE DE MONITOREO (SI QUIERES) -->
+  <!-- SEGUNDO BLOQUE DE MONITOREO -->
   <div class="textoProcesoBox2" style="top: 14%; left: 60.8%;">
      <p class="textoProceso2">
        <span>ESTADO:</span>
@@ -628,15 +646,7 @@ input[type=number] {
 
 <!-- ========== PANTALLA ALARMAS ========== -->
 <div id="alarmasScreen" class="screen">
-     <div class="rectangulo"
-          style="top: 3%; left: 5%; width: 90%; height: 5%;
-                background: transparent; border: none;
-                color: #0033CC; font-size: 2.4vw;
-                z-index: 1;">
-        ALARMAS
-     </div>
-
-     <div style="position:absolute; top:9%; left:6%; width:88%; height:58%;
+     <div style="position:absolute; top:3%; left:6%; width:88%; height:64%;
                  display:flex; flex-direction:column;
                  border-radius:0.9vw; overflow:hidden;
                  box-shadow:0 0.3vw 1.2vw rgba(0,0,0,0.18);
@@ -649,7 +659,7 @@ input[type=number] {
             <div style="width:38%; padding:1vw 1.2vw; border-left:1px solid rgba(255,255,255,0.25); text-align:center; display:flex; align-items:center; justify-content:center;">⚙ Variador de Bombas de Suministro</div>
         </div>
 
-        <!-- FILA: ALARMA ACTUAL -->
+        <!-- FILA: ALARMA RECIENTE -->
         <div style="display:flex; flex:1; background:#ffffff;">
             <div style="width:24%; padding:0.8vw 1.2vw; display:flex; align-items:center; gap:0.6vw; border-left:0.35vw solid #1877f2;">
                 <span style="font-weight:bold; font-size:1.6vw; color:#1a2b4c;">Alarma Reciente</span>
@@ -658,7 +668,7 @@ input[type=number] {
             <div id="v2AlarmaReciente" style="width:38%; padding:0.6vw 1vw; font-size:1.5vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
         </div>
 
-        <!-- FILA: ALARMA PENÚLTIMA -->
+        <!-- FILA: ALARMA ANTERIOR -->
         <div style="display:flex; flex:1; background:#f7f9fc; border-top:1px solid #eef0f4;">
             <div style="width:24%; padding:0.8vw 1.2vw; display:flex; align-items:center; gap:0.6vw; border-left:0.35vw solid #22a6b3;">
                 <span style="font-weight:bold; font-size:1.6vw; color:#1a2b4c;">Alarma Anterior</span>
@@ -667,7 +677,7 @@ input[type=number] {
             <div id="v2AlarmaAnterior" style="width:38%; padding:0.6vw 1vw; font-size:1.5vw; font-weight:600; border-left:1px solid #eef0f4; display:flex; align-items:center; justify-content:center; text-align:center; color:#8a94a6; font-style:italic;">Sin datos</div>
         </div>
 
-        <!-- FILA: ALARMA ANTEPENÚLTIMA -->
+        <!-- FILA: ALARMA PASADA -->
         <div style="display:flex; flex:1; background:#ffffff; border-top:1px solid #eef0f4;">
             <div style="width:24%; padding:0.8vw 1.2vw; display:flex; align-items:center; gap:0.6vw; border-left:0.35vw solid #8a94a6;">
                 <span style="font-weight:bold; font-size:1.6vw; color:#1a2b4c;">Alarma Pasada</span>
@@ -686,7 +696,7 @@ input[type=number] {
                 font-size:1.3vw; font-weight:bold; display:flex; align-items:center;
                 justify-content:center; gap:0.5vw; box-shadow:0 0.2vw 0.6vw rgba(0,0,0,0.2);
                 transition: transform 0.1s ease, filter 0.1s ease;">
-         🔄 Reset Falla · Variador de Bomba Sumergible
+         🔄 Reset Alarma · Variador de Bomba Sumergible
      </button>
 
      <button class="rectangulo boton-reset-falla" data-target="resetfallavar2"
@@ -696,7 +706,7 @@ input[type=number] {
                 font-size:1.3vw; font-weight:bold; display:flex; align-items:center;
                 justify-content:center; gap:0.5vw; box-shadow:0 0.2vw 0.6vw rgba(0,0,0,0.2);
                 transition: transform 0.1s ease, filter 0.1s ease;">
-         🔄 Reset Falla · Variador de Bombas de Suministro
+         🔄 Reset Alarma · Variador de Bombas de Suministro
      </button>
 </div>
 
@@ -705,7 +715,7 @@ input[type=number] {
      background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
     <div style="background:white; border-radius:1vw; padding:2.5vw; width:70%; max-width:500px;
                 box-shadow:0 0.5vw 2vw rgba(0,0,0,0.3); text-align:center; font-family:Arial, sans-serif;">
-        <div style="font-size:1.8vw; font-weight:bold; color:#1a2b4c; margin-bottom:0.8vw;">🔒 Confirmar Reset de Falla</div>
+        <div style="font-size:1.8vw; font-weight:bold; color:#1a2b4c; margin-bottom:0.8vw;">🔒 Confirmar Reset de Alarma</div>
         <div id="modalResetTexto" style="font-size:1.1vw; color:#555; margin-bottom:1.2vw;">Ingresa la contraseña para continuar</div>
         <input id="modalResetPassword" type="password" placeholder="Contraseña"
                style="width:80%; padding:1vw; font-size:1.2vw; border:1px solid #ccc; border-radius:0.5vw; margin-bottom:0.6vw;">
@@ -759,10 +769,8 @@ input[type=number] {
 
 <script>
 // Hash SHA-256 de "usuario:clave" — la clave real NO está escrita en el código.
-// Generado una sola vez a partir de las credenciales originales.
 const HASH_CREDENCIALES = "1ed6edeeca7103ff8a61d5d9d75a99cfb85d44f18cd4082653c4c81bebf94fd4";
 
-// Calcula el hash SHA-256 de un texto usando la API nativa del navegador
 async function sha256(texto) {
   const buffer = new TextEncoder().encode(texto);
   const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
@@ -777,19 +785,14 @@ async function login() {
   const hashIngresado = await sha256(user + ":" + pass);
 
   if (hashIngresado === HASH_CREDENCIALES) {
-      activarPantallaCompleta(); // FULL SCREEN
-
+      activarPantallaCompleta();
       document.getElementById("loginScreen").style.display = "none";
-
-      // Mostrar botones de navegación
       document.getElementById("navButtons").style.display = "flex";
-
       showScreen("mainScreen");
   } else {
       document.getElementById("mensaje").innerText = "Credenciales incorrectas";
   }
 }
-
 
 function showScreen(screenId) {
   const screens = [
@@ -839,6 +842,14 @@ const frecuencia2Span = document.getElementById("frecuenciaValor2");
 const presionpsiSpan = document.getElementById("presionpsi");
 const alarmaImg = document.getElementById("alarmaImg");
 
+// ====== FLUJO ANIMADO ======
+const flowV1 = document.getElementById("flowV1");
+const flowV2Entrada = document.getElementById("flowV2Entrada");
+const flowV2Salida = document.getElementById("flowV2Salida");
+const flowV2SalidaSensor = document.getElementById("flowV2SalidaSensor");
+const flowV2Vertical = document.getElementById("flowV2Vertical");
+// flowTanque1Tanque2 no se controla por JS: queda siempre activo (clase "activo" fija en el HTML)
+
 // ====== SPANS PANTALLA ALARMAS ======
 const v1AlarmaRecienteSpan   = document.getElementById("v1AlarmaReciente");
 const v1AlarmaAnteriorSpan   = document.getElementById("v1AlarmaAnterior");
@@ -882,26 +893,21 @@ const codigosFalla = {
     30: "Falla de conmutación de motor en marcha (E.CH)"
 };
 
-// Traduce un código numérico a su descripción, o un texto genérico si no existe
 function traducirFalla(codigo) {
     if (codigo === undefined || codigo === null) return "Sin datos";
     return codigosFalla.hasOwnProperty(codigo) ? codigosFalla[codigo] : "Código desconocido (" + codigo + ")";
 }
 
-// Actualiza una celda de la tabla de alarmas: texto + color según severidad
 function actualizarCeldaAlarma(span, codigo) {
     span.innerText = traducirFalla(codigo);
 
     if (codigo === undefined || codigo === null) {
-        // Sin datos aún
         span.style.color = "#8a94a6";
         span.style.fontStyle = "italic";
     } else if (codigo === 0) {
-        // Sin falla
         span.style.color = "#1a9e5c";
         span.style.fontStyle = "normal";
     } else {
-        // Falla activa/registrada
         span.style.color = "#d92b2b";
         span.style.fontStyle = "normal";
     }
@@ -909,12 +915,12 @@ function actualizarCeldaAlarma(span, codigo) {
 client.on("connect", () => {
     console.log("Conectado a MQTT");
     client.subscribe(topicVar);
-    client.subscribe(topicIO);  // Suscribirse al topic de I/O
-    client.subscribe(topicAlarmas);  // Suscribirse al topic de alarmas
+    client.subscribe(topicIO);
+    client.subscribe(topicAlarmas);
 });
 
-let sincronizadoProceso = false; // para las frecuencias
-let sincronizadoIO = false;      // para H308, H309, H310
+let sincronizadoProceso = false;
+let sincronizadoIO = false;
 let lastStatus1 = "DESCONOCIDO";
 let lastStatus2 = "DESCONOCIDO";
 client.on("message", (topic, message) => {
@@ -936,6 +942,9 @@ client.on("message", (topic, message) => {
             voltajeSpan.innerText    = volt1 + " V";
             frecuenciaSpan.innerText = freq1 + " Hz";
 
+            // Flujo animado del Variador 1: se activa si está ENCENDIDO
+            flowV1.classList.toggle("activo", lastStatus1 === "ENCENDIDO");
+
             // ====== VARIADOR 2 ======
             const freq2 = (data.H200 / 100).toFixed(2);
             const volt2 = data.H201.toFixed(0);
@@ -949,7 +958,12 @@ client.on("message", (topic, message) => {
             voltaje2Span.innerText    = volt2 + " V";
             frecuencia2Span.innerText = freq2 + " Hz";
 
-            // ====== SINCRONIZAR INPUT SOLO UNA VEZ ======
+            // Flujo animado del Variador 2: se activa si está ENCENDIDO
+            flowV2Entrada.classList.toggle("activo", lastStatus2 === "ENCENDIDO");
+            flowV2Salida.classList.toggle("activo", lastStatus2 === "ENCENDIDO");
+            flowV2SalidaSensor.classList.toggle("activo", lastStatus2 === "ENCENDIDO");
+            flowV2Vertical.classList.toggle("activo", lastStatus2 === "ENCENDIDO");
+
             if (!sincronizadoProceso) {
                 const hmi_freq1 = (data.H105 / 100).toFixed(2);
                 const hmi_freq2 = (data.H205 / 100).toFixed(2);
@@ -966,7 +980,6 @@ client.on("message", (topic, message) => {
             const rectV1  = document.getElementById("rectV1");
             const rectV2Y0 = document.getElementById("rectV2Y0");
             const rectV2Y1 = document.getElementById("rectV2Y1");
-            // ====== DIAGNOSTICO RECTANGULOS ======
             const h300 = data.H300;
             const h301 = data.H301;
             const h302 = data.H302;
@@ -985,21 +998,18 @@ client.on("message", (topic, message) => {
 	    } else {
             alarmaImg.style.display = "none";
             }
-            // ====== RECTÁNGULO 1 → SOLO STATUS V1 ======
             if (lastStatus1 === "ENCENDIDO") {
               rectV1.style.backgroundColor = "green";
             } else {
               rectV1.style.backgroundColor = "red";
             }
 
-            // ====== RECTÁNGULO 2 → STATUS V2 + Y0 ======
             if (lastStatus2 === "ENCENDIDO" && h304 == 1) {
                rectV2Y0.style.backgroundColor = "green";
             } else {
                rectV2Y0.style.backgroundColor = "red";
             }
 
-            // ====== RECTÁNGULO 3 → STATUS V2 + Y1 ======
             if (lastStatus2 === "ENCENDIDO" && h305 == 1) {
             rectV2Y1.style.backgroundColor = "green";
             } else {
@@ -1011,20 +1021,17 @@ client.on("message", (topic, message) => {
 
   	   rect.style.backgroundColor = valor ? "green" : "red";
 
-   	   // Mostrar u ocultar imagen del tanque si se pasa el ID
   	   if(tanqueImgId) {
     	     const img = document.getElementById(tanqueImgId);
       	     if(img) img.style.display = valor ? "block" : "none";
     	   }
 	}
 
-	// ENTRADAS (tanques)
-	setRectColor("rect1", h300, "tanque1Img"); // X0 → tanque 1
-	setRectColor("rect2", h301, "tanque2Img"); // X1 → tanque 2
-	setRectColor("rect3", h302, "tanque3Img"); // X2 → tanque 3
-	setRectColor("rect4", h303);               // X3 → solo rectángulo, sin imagen
+	setRectColor("rect1", h300, "tanque1Img");
+	setRectColor("rect2", h301, "tanque2Img");
+	setRectColor("rect3", h302, "tanque3Img");
+	setRectColor("rect4", h303);
 
-            // SALIDAS
             setRectColor("rect5", h304);
             setRectColor("rect6", h305);
             setRectColor("rect7", h304);
@@ -1032,7 +1039,6 @@ client.on("message", (topic, message) => {
             setRectColor("rect9", h306);
             setRectColor("rect10", h311);
             setRectColor("rect11", h313);
-            // ====== SINCRONIZAR INPUTS H308, H309, H310 SOLO UNA VEZ ======
             if (!sincronizadoIO) {
                 const hmi_retardopresion = (data.H308 / 10).toFixed(1);
                 const hmi_presionminima  = (data.H309 / 100).toFixed(2);
@@ -1046,12 +1052,10 @@ client.on("message", (topic, message) => {
                 console.log("🔄 Sincronizado I/O:", hmi_retardopresion, hmi_presionminima, hmi_reintentos);
             }
         } else if (topic === topicAlarmas) {
-            // ====== VARIADOR 1: H400 (reciente), H401 (anterior), H402 (2 veces anterior) ======
             actualizarCeldaAlarma(v1AlarmaRecienteSpan,  data.H400);
             actualizarCeldaAlarma(v1AlarmaAnteriorSpan,  data.H401);
             actualizarCeldaAlarma(v1Alarma2AnteriorSpan, data.H402);
 
-            // ====== VARIADOR 2: H500 (reciente), H501 (anterior), H502 (2 veces anterior) ======
             actualizarCeldaAlarma(v2AlarmaRecienteSpan,  data.H500);
             actualizarCeldaAlarma(v2AlarmaAnteriorSpan,  data.H501);
             actualizarCeldaAlarma(v2Alarma2AnteriorSpan, data.H502);
@@ -1067,18 +1071,13 @@ client.on("message", (topic, message) => {
 <script>
 const topicControl = "lurin/factory/bombas"; 
 
-// === INPUTS EXISTENTES VARIADOR 1 y 2 ===
 const inputFreqProceso = document.getElementById("inputFreqProceso");
 const inputFreq2Proceso = document.getElementById("inputFreq2Proceso");
 
-// === NUEVOS INPUTS PARAMETROS ===
 const inputRetardoPresion = document.getElementById("inputRetardoPresion");
 const inputPresionMinima  = document.getElementById("inputPresionMinima");
 const inputReintentos = document.getElementById("inputReintentos");
 
-// =======================
-//   LIMITES MIENTRAS ESCRIBE
-// =======================
 inputFreqProceso.addEventListener("input", () => {
     let v = parseFloat(inputFreqProceso.value);
     if (isNaN(v)) return;
@@ -1110,9 +1109,6 @@ inputReintentos.addEventListener("input", () => {
     if (v > 10) inputReintentos.value = 10;
 });
 
-// =======================
-//   AL PERDER FOCO → FORMATEAR + PUBLICAR MQTT
-// =======================
 inputFreqProceso.addEventListener("blur", () => {
     let v = parseFloat(inputFreqProceso.value) || 0;
     v = Math.min(60, Math.max(0, v));
@@ -1154,9 +1150,6 @@ inputReintentos.addEventListener("blur", () => {
     }
 });
 
-// =======================
-//   BOTONES MQTT
-// =======================
 document.querySelectorAll('.boton-mqtt').forEach(btn => {
     btn.onclick = () => {
         const msg = btn.dataset.msg;
@@ -1169,9 +1162,6 @@ document.querySelectorAll('.boton-mqtt').forEach(btn => {
     };
 });
 
-// =======================
-//   RESET DE FALLA (con confirmación por contraseña)
-// =======================
 // Hash SHA-256 de la clave de reset de falla — la clave real no queda escrita en el código.
 const HASH_CLAVE_RESET_FALLA = "2acee0ce6421d1b64d86cc141ef89090305ec18652dcf7d264cb034739e2c1b1";
 const modalResetFalla     = document.getElementById("modalResetFalla");
@@ -1181,11 +1171,11 @@ const modalResetMensaje   = document.getElementById("modalResetMensaje");
 const modalResetCancelar  = document.getElementById("modalResetCancelar");
 const modalResetConfirmar = document.getElementById("modalResetConfirmar");
 
-let comandoPendienteReset = null; // guarda qué botón se está confirmando
+let comandoPendienteReset = null;
 
 function abrirModalReset(comando, nombreVariador) {
     comandoPendienteReset = comando;
-    modalResetTexto.innerText = "Reset Falla · " + nombreVariador;
+    modalResetTexto.innerText = "Reset Alarma · " + nombreVariador;
     modalResetPassword.value = "";
     modalResetMensaje.innerText = "";
     modalResetFalla.style.display = "flex";
@@ -1214,7 +1204,6 @@ async function confirmarReset() {
     }
 }
 
-// Efecto visual de "presionado" + abrir modal
 document.querySelectorAll('.boton-reset-falla').forEach(btn => {
     btn.addEventListener("mousedown", () => {
         btn.style.transform = "scale(0.96)";
@@ -1238,17 +1227,13 @@ document.querySelectorAll('.boton-reset-falla').forEach(btn => {
 modalResetCancelar.addEventListener("click", cerrarModalReset);
 modalResetConfirmar.addEventListener("click", confirmarReset);
 
-// Permitir confirmar con Enter dentro del modal de reset
 modalResetPassword.addEventListener("keydown", (e) => {
     if (e.key === "Enter") confirmarReset();
 });
 
-// Cerrar el modal si se hace clic fuera del cuadro blanco
 modalResetFalla.addEventListener("click", (e) => {
     if (e.target === modalResetFalla) cerrarModalReset();
 });
 </script>
 </body>
 </html>
-
-
