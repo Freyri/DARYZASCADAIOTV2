@@ -174,27 +174,42 @@ body {
 .botones-container {
     z-index: 10;
 }
-@media (max-width: 768px) {
+@media (max-width: 768px), (max-height: 500px) {
   .rectangulo {
     width: 6vw;
     height: 10vh;
     font-size: 2.5vw;
   }
   .textoProcesoBox2 {
-    width: 42vw;
-    height: 4.4vh;
-    padding: 1vw 1.5vw;
+    width: 30vw;
+    height: 8.5vh;
+    padding: 0.6vw 1vw;
+    box-sizing: border-box;
   }
   .textoProceso2 {
-    font-size: 2.4vw;
+    font-size: 1.6vw;
   }
   .textoProcesoBoxTransparente {
-    width: 20vw;
-    height: 4vh;
-    padding: 0.5vw 1vw;
+    width: 16vw;
+    height: 6vh;
+    padding: 0.4vw 0.8vw;
+    box-sizing: border-box;
   }
   .textoProcesoTransparente {
-    font-size: 2.6vw;
+    font-size: 1.8vw;
+  }
+  #inputFreqProceso, #inputFreq2Proceso {
+    font-size: 1.6vw !important;
+  }
+}
+
+/* Pantalla de MONITOREO en landscape muy bajo (celular con barras del navegador) */
+@media (max-height: 420px) and (orientation: landscape) {
+  .textoProcesoBox2 {
+    height: 9vh;
+  }
+  .textoProcesoBoxTransparente {
+    height: 6.5vh;
   }
 }
 
