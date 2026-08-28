@@ -357,6 +357,33 @@ input[type=number] {
   color: #d92b2b;
 }
 
+/* ===== OVERLAY: FORZAR ORIENTACIÓN HORIZONTAL EN LA PLATAFORMA (no aplica al login) ===== */
+#overlayRotar {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #0b1b34;
+  color: white;
+  z-index: 100000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
+}
+#overlayRotar .icono-girar {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  animation: girarIcono 1.6s ease-in-out infinite;
+}
+@keyframes girarIcono {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(90deg); }
+}
+
 </style>
 </head>
 <body>
@@ -824,6 +851,13 @@ input[type=number] {
     </div>
 </div>
 
+<!-- ========== OVERLAY: PIDE GIRAR EL CELULAR (solo aparece dentro de la plataforma, nunca en el login) ========== -->
+<div id="overlayRotar">
+    <div class="icono-girar">📱</div>
+    <div style="font-size:1.3rem; font-weight:bold; margin-bottom:8px;">Gira tu celular</div>
+    <div style="font-size:1rem; opacity:0.85;">Esta pantalla está diseñada para verse en modo horizontal</div>
+</div>
+
 <div id="navButtons" class="fullScreenContainer" style="display:none;">
     <button class="rectangulo" 
         style="top: 90%; left: 1%; width: 15%; height: 8%; background:#0f62fe; color:white; border-radius:3px; border:none; font-size:1.6vw; font-weight:bold; cursor:pointer;" 
@@ -883,9 +917,12 @@ async function login() {
 
   if (hashIngresado === HASH_CREDENCIALES) {
       activarPantallaCompleta();
+      sesionIniciada = true;
+      intentarBloquearHorizontal();
       document.getElementById("loginScreen").style.display = "none";
       document.getElementById("navButtons").style.display = "flex";
       showScreen("mainScreen");
+      evaluarOrientacion();
   } else {
       document.getElementById("mensaje").innerText = "Credenciales incorrectas";
   }
@@ -913,6 +950,38 @@ function activarPantallaCompleta() {
   else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
   else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
 }
+
+// ====== FORZAR ORIENTACIÓN HORIZONTAL EN LA PLATAFORMA (no aplica al login) ======
+// sesionIniciada controla que el aviso de "gira tu celular" SOLO aparezca después
+// de haber iniciado sesión (nunca sobre la pantalla de login).
+let sesionIniciada = false;
+const overlayRotar = document.getElementById("overlayRotar");
+
+function intentarBloquearHorizontal() {
+    // Intenta bloquear la orientación en horizontal. Funciona principalmente en
+    // Android/Chrome (requiere pantalla completa, ya activada arriba). En navegadores
+    // que no lo soportan (ej: Safari de iPhone) simplemente no hace nada, y para esos
+    // casos usamos el overlay de "Gira tu celular" como respaldo.
+    try {
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock("landscape").catch(() => {});
+        }
+    } catch (e) {
+        console.warn("No se pudo bloquear la orientación:", e);
+    }
+}
+
+function evaluarOrientacion() {
+    if (!sesionIniciada) {
+        overlayRotar.style.display = "none";
+        return;
+    }
+    const esVertical = window.matchMedia("(orientation: portrait)").matches;
+    overlayRotar.style.display = esVertical ? "flex" : "none";
+}
+
+window.addEventListener("resize", evaluarOrientacion);
+window.addEventListener("orientationchange", evaluarOrientacion);
 
 </script>
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
