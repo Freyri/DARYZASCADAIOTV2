@@ -328,6 +328,35 @@ input[type=number] {
     to   { background-position: 0 0; }
 }
 
+/* ===== TECLADO NUMERICO PROPIO (reset de alarma) ===== */
+.teclado-numerico {
+  display: none;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6vw;
+  margin-top: 1vw;
+}
+.teclado-numerico.visible {
+  display: grid;
+}
+.tecla-numero {
+  padding: 1vw;
+  font-size: 1.4vw;
+  border: 1px solid #ccc;
+  border-radius: 0.5vw;
+  background: #f0f2f5;
+  color: #1a2b4c;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+}
+.tecla-numero:active {
+  background: #d8dce3;
+}
+.tecla-borrar, .tecla-cerrar {
+  background: #ffdede;
+  color: #d92b2b;
+}
+
 </style>
 </head>
 <body>
@@ -735,8 +764,25 @@ input[type=number] {
         <div style="font-size:1.8vw; font-weight:bold; color:#1a2b4c; margin-bottom:0.8vw;">🔒 Confirmar Reset de Alarma</div>
         <div id="modalResetTexto" style="font-size:1.1vw; color:#555; margin-bottom:1.2vw;">Ingresa la contraseña para continuar</div>
         <input id="modalResetPassword" type="password" placeholder="Contraseña"
-               style="width:80%; padding:1vw; font-size:1.2vw; border:1px solid #ccc; border-radius:0.5vw; margin-bottom:0.6vw;">
-        <div id="modalResetMensaje" style="color:#d92b2b; font-size:0.95vw; min-height:1.4vw; margin-bottom:0.8vw;"></div>
+               readonly inputmode="none" autocomplete="off"
+               style="width:80%; padding:1vw; font-size:1.2vw; border:1px solid #ccc; border-radius:0.5vw; margin-bottom:0.6vw; cursor:pointer; background:#fff;">
+
+        <div id="tecladoNumerico" class="teclado-numerico">
+            <button type="button" class="tecla-numero" data-num="1">1</button>
+            <button type="button" class="tecla-numero" data-num="2">2</button>
+            <button type="button" class="tecla-numero" data-num="3">3</button>
+            <button type="button" class="tecla-numero" data-num="4">4</button>
+            <button type="button" class="tecla-numero" data-num="5">5</button>
+            <button type="button" class="tecla-numero" data-num="6">6</button>
+            <button type="button" class="tecla-numero" data-num="7">7</button>
+            <button type="button" class="tecla-numero" data-num="8">8</button>
+            <button type="button" class="tecla-numero" data-num="9">9</button>
+            <button type="button" class="tecla-numero tecla-borrar" id="tecladoBorrar">⌫</button>
+            <button type="button" class="tecla-numero" data-num="0">0</button>
+            <button type="button" class="tecla-numero tecla-cerrar" id="tecladoCerrar">✕</button>
+        </div>
+
+        <div id="modalResetMensaje" style="color:#d92b2b; font-size:0.95vw; min-height:1.4vw; margin-bottom:0.8vw; margin-top:0.8vw;"></div>
         <div style="display:flex; gap:1vw; justify-content:center;">
             <button id="modalResetCancelar" style="padding:0.8vw 1.6vw; font-size:1.1vw; border:none; border-radius:0.5vw; background:#8a94a6; color:white; font-weight:bold; cursor:pointer;">Cancelar</button>
             <button id="modalResetConfirmar" style="padding:0.8vw 1.6vw; font-size:1.1vw; border:none; border-radius:0.5vw; background:#0f62fe; color:white; font-weight:bold; cursor:pointer;">Confirmar</button>
@@ -1338,6 +1384,38 @@ const modalResetConfirmar = document.getElementById("modalResetConfirmar");
 
 let comandoPendienteReset = null;
 
+// ====== TECLADO NUMERICO PROPIO (para no abrir el teclado nativo del celular) ======
+const tecladoNumerico = document.getElementById("tecladoNumerico");
+
+function mostrarTeclado() {
+    tecladoNumerico.classList.add("visible");
+}
+function ocultarTeclado() {
+    tecladoNumerico.classList.remove("visible");
+}
+
+// Al tocar el campo (que es readonly), se abre el teclado numérico propio
+modalResetPassword.addEventListener("click", () => {
+    mostrarTeclado();
+});
+
+// Botones numéricos: van agregando dígitos al password
+document.querySelectorAll(".tecla-numero[data-num]").forEach(btn => {
+    btn.addEventListener("click", () => {
+        modalResetPassword.value += btn.dataset.num;
+    });
+});
+
+// Botón borrar: quita el último dígito
+document.getElementById("tecladoBorrar").addEventListener("click", () => {
+    modalResetPassword.value = modalResetPassword.value.slice(0, -1);
+});
+
+// Botón cerrar el teclado manualmente (sin cancelar el modal)
+document.getElementById("tecladoCerrar").addEventListener("click", () => {
+    ocultarTeclado();
+});
+
 function abrirModalReset(comando, nombreVariador) {
     comandoPendienteReset = comando;
     modalResetTexto.innerText = "Reset Alarma · " + nombreVariador;
@@ -1345,11 +1423,13 @@ function abrirModalReset(comando, nombreVariador) {
     modalResetMensaje.innerText = "";
     modalResetFalla.style.display = "flex";
     modalResetPassword.focus();
+    ocultarTeclado();
 }
 
 function cerrarModalReset() {
     modalResetFalla.style.display = "none";
     comandoPendienteReset = null;
+    ocultarTeclado();
 }
 
 async function confirmarReset() {
@@ -1366,6 +1446,7 @@ async function confirmarReset() {
         modalResetMensaje.innerText = "Contraseña incorrecta";
         modalResetPassword.value = "";
         modalResetPassword.focus();
+        ocultarTeclado();
     }
 }
 
