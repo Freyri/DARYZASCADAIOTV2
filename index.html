@@ -371,8 +371,8 @@ input[type=number] {
       <!-- FLUJO ANIMADO: VARIADOR 1 (bomba sumergible, tramo vertical izquierdo). Sube (la bomba empuja el agua hacia el tanque 1) -->
       <div id="flowV1" class="flow-pipe flow-vertical" style="top:18.72%; left:5.05%; width:1.9%; height:54.10%;"></div>
 
-      <!-- FLUJO ANIMADO: TANQUE 1 <-> TANQUE 2 (vasos comunicantes: siempre hay flujo, sin importar el estado de las bombas) -->
-      <div id="flowTanque1Tanque2" class="flow-pipe flow-horizontal activo" style="top:35.68%; left:22.91%; width:1.90%; height:3.53%;"></div>
+      <!-- FLUJO ANIMADO: TANQUE 1 <-> TANQUE 2 (vasos comunicantes: se oculta solo si AMBOS tanques están vacíos) -->
+      <div id="flowTanque1Tanque2" class="flow-pipe flow-horizontal" style="top:35.68%; left:22.91%; width:1.90%; height:3.53%;"></div>
 
       <!-- FLUJO ANIMADO: VARIADOR 2. Cada tramo va solo sobre tubo recto: corta antes de las uniones en "T" que suben/bajan a cada bomba y antes de los codos -->
       <div id="flowV2Entrada" class="flow-pipe flow-horizontal" style="top:35.68%; left:37.88%; width:1.90%; height:3.53%;"></div>
@@ -865,7 +865,163 @@ const flowV2Entrada = document.getElementById("flowV2Entrada");
 const flowV2Salida = document.getElementById("flowV2Salida");
 const flowV2SalidaSensor = document.getElementById("flowV2SalidaSensor");
 const flowV2Vertical = document.getElementById("flowV2Vertical");
-// flowTanque1Tanque2 no se controla por JS: queda siempre activo (clase "activo" fija en el HTML)
+// flowTanque1Tanque2 (vasos comunicantes): se oculta solo si AMBOS tanques (1 y 2) están vacíos
+const flowTanque1Tanque2 = document.getElementById("flowTanque1Tanque2");
+
+// ====== LEDS DE ESTADO (rectV1, rectV2Y0, rectV2Y1) ======
+const rectV1El = document.getElementById("rectV1");
+const rectV2Y0El = document.getElementById("rectV2Y0");
+const rectV2Y1El = document.getElementById("rectV2Y1");
+
+// ====== ALARMAS: parpadeo (LEDs e imagen), beep y voz en bucle ======
+let blinkOn = true;
+let h304Global = 0;
+let h305Global = 0;
+let alarmaPresionActiva = false;
+let h400Global = null; // código de falla más reciente del Variador 1
+let h500Global = null; // código de falla más reciente del Variador 2
+let anuncioEnCurso = false; // evita solapar ciclos de voz
+let audioCtxGlobal = null;
+
+// Beep corto por Web Audio (no necesita archivos externos)
+function reproducirBeep() {
+    try {
+        if (!audioCtxGlobal) {
+            audioCtxGlobal = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtxGlobal.state === "suspended") audioCtxGlobal.resume();
+        const ctx = audioCtxGlobal;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "square";
+        osc.frequency.value = 880;
+        gain.gain.value = 0.15;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        setTimeout(() => { osc.stop(); }, 220);
+    } catch (e) {
+        console.warn("No se pudo reproducir el beep:", e);
+    }
+}
+
+// Pinta los 3 LEDs circulares: verde=encendido, rojo=apagado, naranja intermitente=alarmado
+function actualizarLedsVariadores() {
+    // Variador 1 (bomba sumergible)
+    if (lastStatus1 === "ALARMADO") {
+        rectV1El.style.backgroundColor = blinkOn ? "#ff8c00" : "#7a4400";
+    } else if (lastStatus1 === "ENCENDIDO") {
+        rectV1El.style.backgroundColor = "green";
+    } else {
+        rectV1El.style.backgroundColor = "red";
+    }
+
+    // Variador 2 (bombas de suministro) - Bomba 1 (Y0)
+    if (lastStatus2 === "ALARMADO" && h304Global == 1) {
+        rectV2Y0El.style.backgroundColor = blinkOn ? "#ff8c00" : "#7a4400";
+    } else if (lastStatus2 === "ENCENDIDO" && h304Global == 1) {
+        rectV2Y0El.style.backgroundColor = "green";
+    } else {
+        rectV2Y0El.style.backgroundColor = "red";
+    }
+
+    // Variador 2 (bombas de suministro) - Bomba 2 (Y1)
+    if (lastStatus2 === "ALARMADO" && h305Global == 1) {
+        rectV2Y1El.style.backgroundColor = blinkOn ? "#ff8c00" : "#7a4400";
+    } else if (lastStatus2 === "ENCENDIDO" && h305Global == 1) {
+        rectV2Y1El.style.backgroundColor = "green";
+    } else {
+        rectV2Y1El.style.backgroundColor = "red";
+    }
+}
+
+// Parpadeo de la imagen de alarma por falta de presión (misma posición/tamaño, solo cambia opacidad)
+function actualizarAlarmaImagen() {
+    if (alarmaPresionActiva) {
+        alarmaImg.style.display = "block";
+        alarmaImg.style.opacity = blinkOn ? "1" : "0";
+    } else {
+        alarmaImg.style.display = "none";
+    }
+}
+
+// Arma la lista de mensajes de voz según qué esté alarmado en este momento,
+// incluyendo el tipo de falla (según el último código recibido por topicAlarmas)
+function obtenerMensajesAlarmaActivos() {
+    const mensajes = [];
+
+    if (lastStatus1 === "ALARMADO") {
+        mensajes.push("Variador de bomba sumergible alarmado. " + traducirFalla(h400Global) + ".");
+    }
+    if (lastStatus2 === "ALARMADO" && h304Global == 1) {
+        mensajes.push("Variador de bombas de suministro, bomba 1, alarmado. " + traducirFalla(h500Global) + ".");
+    }
+    if (lastStatus2 === "ALARMADO" && h305Global == 1) {
+        mensajes.push("Variador de bombas de suministro, bomba 2, alarmado. " + traducirFalla(h500Global) + ".");
+    }
+    if (alarmaPresionActiva) {
+        mensajes.push("Alarma. Falta de presión en el sistema.");
+    }
+
+    return mensajes;
+}
+
+// Reproduce los mensajes de la lista uno por uno, con una breve pausa entre cada uno
+function reproducirSiguienteMensaje(mensajes, indice) {
+    if (indice >= mensajes.length) {
+        anuncioEnCurso = false; // el ciclo terminó; el intervalo de abajo decide si vuelve a empezar
+        return;
+    }
+    try {
+        const utter = new SpeechSynthesisUtterance(mensajes[indice]);
+        utter.lang = "es-PE";
+        utter.rate = 1;
+        utter.pitch = 1;
+        utter.onend = () => {
+            setTimeout(() => reproducirSiguienteMensaje(mensajes, indice + 1), 300);
+        };
+        utter.onerror = () => {
+            anuncioEnCurso = false;
+        };
+        window.speechSynthesis.speak(utter);
+    } catch (e) {
+        console.warn("No se pudo anunciar por voz:", e);
+        anuncioEnCurso = false;
+    }
+}
+
+// Revisa si hay alarmas activas y, si no hay un anuncio en curso, lanza un ciclo:
+// beep -> dice cada alarma activa -> espera ~1s -> vuelve a revisar. Se detiene solo
+// cuando ya no queda ninguna alarma activa.
+function revisarAlarmasYNotificar() {
+    if (anuncioEnCurso) return;
+
+    const mensajes = obtenerMensajesAlarmaActivos();
+    if (mensajes.length === 0) return;
+
+    anuncioEnCurso = true;
+    reproducirBeep();
+    reproducirSiguienteMensaje(mensajes, 0);
+}
+
+// Tick de parpadeo: alterna cada 500ms => ciclo completo de 1 segundo
+setInterval(() => {
+    blinkOn = !blinkOn;
+    actualizarLedsVariadores();
+    actualizarAlarmaImagen();
+}, 500);
+
+// Bucle de anuncios: cada 3 segundos revisa si hay que hablar (si ya está hablando, no interrumpe)
+setInterval(() => {
+    revisarAlarmasYNotificar();
+}, 3000);
+
+// flowTanque1Tanque2 no se controla por JS al inicio: queda inactivo hasta que llegue el primer mensaje IO
+
+let sincronizadoProceso = false;
+let sincronizadoIO = false;
+let lastStatus1 = "DESCONOCIDO";
+let lastStatus2 = "DESCONOCIDO";
 
 // ====== SPANS PANTALLA ALARMAS ======
 const v1AlarmaRecienteSpan   = document.getElementById("v1AlarmaReciente");
@@ -936,10 +1092,6 @@ client.on("connect", () => {
     client.subscribe(topicAlarmas);
 });
 
-let sincronizadoProceso = false;
-let sincronizadoIO = false;
-let lastStatus1 = "DESCONOCIDO";
-let lastStatus2 = "DESCONOCIDO";
 client.on("message", (topic, message) => {
     try {
         const data = JSON.parse(message.toString());
@@ -981,6 +1133,9 @@ client.on("message", (topic, message) => {
             flowV2SalidaSensor.classList.toggle("activo", lastStatus2 === "ENCENDIDO");
             flowV2Vertical.classList.toggle("activo", lastStatus2 === "ENCENDIDO");
 
+            // Actualiza LEDs (verde/rojo/naranja intermitente); el bucle de voz corre aparte cada 1s
+            actualizarLedsVariadores();
+
             if (!sincronizadoProceso) {
                 const hmi_freq1 = (data.H105 / 100).toFixed(2);
                 const hmi_freq2 = (data.H205 / 100).toFixed(2);
@@ -994,9 +1149,6 @@ client.on("message", (topic, message) => {
             }
 
         } else if (topic === topicIO) {
-            const rectV1  = document.getElementById("rectV1");
-            const rectV2Y0 = document.getElementById("rectV2Y0");
-            const rectV2Y1 = document.getElementById("rectV2Y1");
             const h300 = data.H300;
             const h301 = data.H301;
             const h302 = data.H302;
@@ -1010,28 +1162,15 @@ client.on("message", (topic, message) => {
             const presionpsi = (data.H312 / 100).toFixed(2);
 	    presionpsiSpan.innerText = presionpsi + " psi";
 
-	    if (h307 == 1) {
-  	    alarmaImg.style.display = "block";
-	    } else {
-            alarmaImg.style.display = "none";
-            }
-            if (lastStatus1 === "ENCENDIDO") {
-              rectV1.style.backgroundColor = "green";
-            } else {
-              rectV1.style.backgroundColor = "red";
-            }
+	    // Alarma por falta de presión: ahora intermitente (posición y tamaño no se tocan)
+	    alarmaPresionActiva = (h307 == 1);
+	    actualizarAlarmaImagen();
 
-            if (lastStatus2 === "ENCENDIDO" && h304 == 1) {
-               rectV2Y0.style.backgroundColor = "green";
-            } else {
-               rectV2Y0.style.backgroundColor = "red";
-            }
+            // Guarda qué bomba está seleccionada en el Variador 2, para saber cuál LED parpadea
+            h304Global = h304;
+            h305Global = h305;
+            actualizarLedsVariadores();
 
-            if (lastStatus2 === "ENCENDIDO" && h305 == 1) {
-            rectV2Y1.style.backgroundColor = "green";
-            } else {
-                rectV2Y1.style.backgroundColor = "red";
-            }
 	function setRectColor(rectId, valor, tanqueImgId) {
    	   const rect = document.getElementById(rectId);
    	   if (!rect) return;
@@ -1056,6 +1195,10 @@ client.on("message", (topic, message) => {
             setRectColor("rect9", h306);
             setRectColor("rect10", h311);
             setRectColor("rect11", h313);
+
+            // Flujo Tanque1<->Tanque2 (vasos comunicantes): se oculta solo si AMBOS tanques están vacíos
+            flowTanque1Tanque2.classList.toggle("activo", !(h300 == 0 && h301 == 0));
+
             if (!sincronizadoIO) {
                 const hmi_retardopresion = (data.H308 / 10).toFixed(1);
                 const hmi_presionminima  = (data.H309 / 100).toFixed(2);
@@ -1076,6 +1219,11 @@ client.on("message", (topic, message) => {
             actualizarCeldaAlarma(v2AlarmaRecienteSpan,  data.H500);
             actualizarCeldaAlarma(v2AlarmaAnteriorSpan,  data.H501);
             actualizarCeldaAlarma(v2Alarma2AnteriorSpan, data.H502);
+
+            // Guarda el código de falla más reciente de cada variador, para que el
+            // anuncio de voz diga el tipo de alarma (sobrecarga, subvoltaje, etc.)
+            h400Global = data.H400;
+            h500Global = data.H500;
         }
 
     } catch(e) {
