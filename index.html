@@ -476,6 +476,64 @@ body.tema-oscuro #fullscreenBtn {
   font-size: 0.9vw;
   font-family: Arial, sans-serif;
 }
+.tendencia-historico-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.7vw;
+  margin-bottom: 1vw;
+  flex-wrap: wrap;
+  font-family: Arial, sans-serif;
+  flex: none;
+}
+.tendencia-modo-btn {
+  padding: 0.6vw 1.2vw;
+  font-size: 1vw;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+  border: 1px solid #0f62fe;
+  border-radius: 0.5vw;
+  cursor: pointer;
+  background: #fff;
+  color: #0f62fe;
+  transition: 0.2s ease;
+}
+.tendencia-modo-btn.modo-activo {
+  background: #0f62fe;
+  color: #fff;
+}
+.tendencia-fecha-input {
+  padding: 0.55vw 0.8vw;
+  font-size: 1vw;
+  font-family: Arial, sans-serif;
+  border: 1px solid #ccd3e0;
+  border-radius: 0.5vw;
+  color: #1a2b4c;
+  background: #fff;
+}
+.tendencia-cargar-btn {
+  padding: 0.6vw 1.2vw;
+  font-size: 1vw;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+  border: none;
+  border-radius: 0.5vw;
+  cursor: pointer;
+  background: #22a6b3;
+  color: white;
+  transition: 0.2s ease;
+}
+.tendencia-cargar-btn:hover { background: #0984e3; }
+.tendencia-cargar-btn:disabled {
+  background: #b7bcc7;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+.tendencia-cargar-btn:disabled:hover { background: #b7bcc7; }
+.tendencia-cargando {
+  font-size: 0.95vw;
+  color: #0f62fe;
+  font-family: Arial, sans-serif;
+}
 .tendencia-tabs {
   display: flex;
   gap: 0.7vw;
@@ -541,6 +599,69 @@ body.tema-oscuro .tendencia-grafico-grande {
   border: 1px solid rgba(124,202,230,0.25) !important;
 }
 body.tema-oscuro .tendencia-nota { color: #7C90B3 !important; }
+body.tema-oscuro .tendencia-modo-btn {
+  background: rgba(19,40,70,0.75) !important;
+  color: #7CCAE6 !important;
+  border: 1px solid rgba(124,202,230,0.4) !important;
+}
+body.tema-oscuro .tendencia-modo-btn.modo-activo {
+  background: linear-gradient(135deg, #2F6FED, #22D3EE) !important;
+  color: #06131f !important;
+}
+body.tema-oscuro .tendencia-fecha-input {
+  background: rgba(19,40,70,0.75) !important;
+  color: #EAF1FB !important;
+  border: 1px solid rgba(124,202,230,0.25) !important;
+}
+/* Contenedor de los botones a la derecha del encabezado de tendencia.
+   El margin-right deja espacio libre para que NO choquen con #fullscreenBtn
+   (que es fixed, top-right), así cada botón recibe su propio clic. */
+.tendencia-header-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.6vw;
+  flex: none;
+  margin-right: clamp(55px, 5vw, 95px);
+}
+.tendencia-config-btn {
+  width: 2.4vw;
+  height: 2.4vw;
+  min-width: 30px;
+  min-height: 30px;
+  border-radius: 50%;
+  border: 1px solid #ccd3e0;
+  background: #f7f9fc;
+  color: #8a94a6;
+  font-size: 1.1vw;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s ease;
+  flex: none;
+}
+.tendencia-config-btn:hover {
+  background: #eef0f4;
+  color: #0f62fe;
+  border-color: #0f62fe;
+}
+body.tema-oscuro .tendencia-config-btn {
+  background: rgba(19,40,70,0.75) !important;
+  color: #7C90B3 !important;
+  border: 1px solid rgba(124,202,230,0.25) !important;
+}
+body.tema-oscuro .tendencia-config-btn:hover {
+  color: #22D3EE !important;
+  border-color: rgba(124,202,230,0.5) !important;
+}
+.tendencia-alerta-nota {
+  font-size: 0.8vw;
+  color: #d92b2b;
+  margin-top: 0.4vw;
+  font-family: Arial, sans-serif;
+  flex: none;
+}
+body.tema-oscuro .tendencia-alerta-nota { color: #ff8080 !important; }
 
 body.tema-oscuro #loginBox {
   background: linear-gradient(180deg, rgba(19,40,70,0.92), rgba(10,22,40,0.94)) !important;
@@ -634,16 +755,31 @@ body.tema-oscuro #navButtons button {
 }
 
 body.tema-oscuro #modalResetFalla,
-body.tema-oscuro #modalTecladoNum {
+body.tema-oscuro #modalTecladoNum,
+body.tema-oscuro #modalConfigLimites,
+body.tema-oscuro #modalEstadisticasExcesos {
   background: rgba(5,11,22,0.75) !important;
 }
 body.tema-oscuro #modalResetFalla > div,
-body.tema-oscuro #modalTecladoNum > div {
+body.tema-oscuro #modalTecladoNum > div,
+body.tema-oscuro #modalConfigLimites > div,
+body.tema-oscuro #modalEstadisticasExcesos > div {
   background: linear-gradient(160deg, rgba(19,40,70,0.97), rgba(10,22,40,0.98)) !important;
   border: 1px solid rgba(124,202,230,0.25) !important;
   color: #EAF1FB !important;
 }
 body.tema-oscuro #modalResetTitulo { color:#EAF1FB !important; }
+body.tema-oscuro #configLimitesTitulo { color:#EAF1FB !important; }
+body.tema-oscuro #estadisticasExcesosTitulo { color:#EAF1FB !important; }
+body.tema-oscuro #estadisticasExcesosRango { color:#7C90B3 !important; }
+body.tema-oscuro #modalEstadisticasExcesos th { color:#EAF1FB !important; border-bottom-color:#22D3EE !important; }
+body.tema-oscuro #modalEstadisticasExcesos td { border-bottom-color: rgba(124,202,230,0.2) !important; }
+body.tema-oscuro #modalConfigLimites input {
+  background: rgba(11,20,36,0.85) !important;
+  color: #EAF1FB !important;
+  border: 1px solid rgba(124,202,230,0.3) !important;
+}
+body.tema-oscuro #modalConfigLimites label { color:#EAF1FB !important; }
 body.tema-oscuro #tecladoNumTitulo { color:#EAF1FB !important; }
 body.tema-oscuro #modalResetTexto { color:#7C90B3 !important; }
 body.tema-oscuro #modalResetPassword {
@@ -938,10 +1074,19 @@ body.tema-oscuro #logoContainer img {
   <div class="tendencia-header">
     <button class="tendencia-volver" onclick="regresarDesdeTendencia()">← Regresar</button>
     <div class="tendencia-titulo">Tendencia · Variador de Bomba Sumergible</div>
-    <div style="width:8vw;"></div>
+    <div class="tendencia-header-acciones">
+      <button id="statsBtn1" class="tendencia-config-btn" onclick="abrirEstadisticasExcesos(1)" title="Ver cuántas veces se sobrepasó el límite">📊</button>
+      <button id="configBtn1" class="tendencia-config-btn" onclick="abrirConfigLimites(1)" title="Configurar límites">⚙</button>
+    </div>
   </div>
   <div class="tendencia-controles">
     <span id="tendenciaMensaje1" class="tendencia-mensaje"></span>
+  </div>
+  <div class="tendencia-historico-bar">
+    <button id="btnVivo1" class="tendencia-modo-btn modo-activo" onclick="verEnVivo(1)">● En vivo (30 min)</button>
+    <input type="date" id="fechaHistorico1" class="tendencia-fecha-input">
+    <button class="tendencia-cargar-btn" onclick="cargarHistorico(1)">Ver histórico</button>
+    <button id="btnDescargarExcel1" class="tendencia-cargar-btn" onclick="descargarExcelHistorico(1)" disabled title="Primero carga un histórico para poder descargarlo">⬇ Descargar Excel</button>
   </div>
   <div class="tendencia-tabs">
     <button id="tabMetrica1-estado" class="tendencia-tab-btn tab-activo" onclick="cambiarMetricaTendencia(1,'estado')">Estado</button>
@@ -953,7 +1098,8 @@ body.tema-oscuro #logoContainer img {
   <div class="tendencia-grafico-grande">
     <canvas id="chartTendenciaV1"></canvas>
   </div>
-  <div class="tendencia-nota">Esta gráfica muestra los últimos 30 minutos en vivo, mientras esta página esté abierta en el navegador.</div>
+  <div id="tendenciaNota1" class="tendencia-nota">Esta gráfica muestra los últimos 30 minutos en vivo, mientras esta página esté abierta en el navegador.</div>
+  <div class="tendencia-alerta-nota">🔴 Los tramos en rojo indican corriente/potencia/voltaje fuera del límite configurado, o el variador en ALARMA. Toca el ⚙ para configurar los límites.</div>
 </div>
 
 <!-- ========== PANTALLA DE TENDENCIA · VARIADOR 2 (disimulada, sin los 6 botones) ========== -->
@@ -961,10 +1107,19 @@ body.tema-oscuro #logoContainer img {
   <div class="tendencia-header">
     <button class="tendencia-volver" onclick="regresarDesdeTendencia()">← Regresar</button>
     <div class="tendencia-titulo">Tendencia · Variador de Bombas de Suministro</div>
-    <div style="width:8vw;"></div>
+    <div class="tendencia-header-acciones">
+      <button id="statsBtn2" class="tendencia-config-btn" onclick="abrirEstadisticasExcesos(2)" title="Ver cuántas veces se sobrepasó el límite">📊</button>
+      <button id="configBtn2" class="tendencia-config-btn" onclick="abrirConfigLimites(2)" title="Configurar límites">⚙</button>
+    </div>
   </div>
   <div class="tendencia-controles">
     <span id="tendenciaMensaje2" class="tendencia-mensaje"></span>
+  </div>
+  <div class="tendencia-historico-bar">
+    <button id="btnVivo2" class="tendencia-modo-btn modo-activo" onclick="verEnVivo(2)">● En vivo (30 min)</button>
+    <input type="date" id="fechaHistorico2" class="tendencia-fecha-input">
+    <button class="tendencia-cargar-btn" onclick="cargarHistorico(2)">Ver histórico</button>
+    <button id="btnDescargarExcel2" class="tendencia-cargar-btn" onclick="descargarExcelHistorico(2)" disabled title="Primero carga un histórico para poder descargarlo">⬇ Descargar Excel</button>
   </div>
   <div class="tendencia-tabs">
     <button id="tabMetrica2-estado" class="tendencia-tab-btn tab-activo" onclick="cambiarMetricaTendencia(2,'estado')">Estado</button>
@@ -976,7 +1131,8 @@ body.tema-oscuro #logoContainer img {
   <div class="tendencia-grafico-grande">
     <canvas id="chartTendenciaV2"></canvas>
   </div>
-  <div class="tendencia-nota">Esta gráfica muestra los últimos 30 minutos en vivo, mientras esta página esté abierta en el navegador.</div>
+  <div id="tendenciaNota2" class="tendencia-nota">Esta gráfica muestra los últimos 30 minutos en vivo, mientras esta página esté abierta en el navegador.</div>
+  <div class="tendencia-alerta-nota">🔴 Los tramos en rojo indican corriente/potencia/voltaje fuera del límite configurado, o el variador en ALARMA. Toca el ⚙ para configurar los límites.</div>
 </div>
 
 <div id="parametrosScreen" class="screen">
@@ -1175,7 +1331,7 @@ body.tema-oscuro #logoContainer img {
 
 <!-- ========== MODAL DE TECLADO NUMÉRICO (para todas las entradas numéricas: frecuencias y parámetros) ========== -->
 <div id="modalTecladoNum" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-     background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
+     background:rgba(0,0,0,0.55); z-index:10000; align-items:center; justify-content:center;">
     <div style="background:white; border-radius:1vw; padding:2vw; width:75%; max-width:420px;
                 box-shadow:0 0.5vw 2vw rgba(0,0,0,0.3); text-align:center; font-family:Arial, sans-serif;">
         <div id="tecladoNumTitulo" style="font-size:1.3vw; font-weight:bold; color:#1a2b4c; margin-bottom:0.8vw;">Ingresar valor</div>
@@ -1198,6 +1354,57 @@ body.tema-oscuro #logoContainer img {
         <div style="display:flex; gap:1vw; justify-content:center; margin-top:1vw;">
             <button id="tecladoNumCancelar" style="padding:0.8vw 1.6vw; font-size:1.1vw; border:none; border-radius:0.5vw; background:#8a94a6; color:white; font-weight:bold; cursor:pointer;">Cancelar</button>
             <button id="tecladoNumAceptar" style="padding:0.8vw 1.6vw; font-size:1.1vw; border:none; border-radius:0.5vw; background:#0f62fe; color:white; font-weight:bold; cursor:pointer;">Aceptar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: CONFIGURAR LÍMITES DE ALARMA DE LA TENDENCIA ========== -->
+<div id="modalConfigLimites" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:1vw; padding:2.2vw; width:80%; max-width:440px;
+                box-shadow:0 0.5vw 2vw rgba(0,0,0,0.3); text-align:left; font-family:Arial, sans-serif;">
+        <div id="configLimitesTitulo" style="font-size:1.25vw; font-weight:bold; color:#1a2b4c; margin-bottom:0.4vw; text-align:center;">⚙ Límites de alarma</div>
+        <div style="font-size:0.85vw; color:#8a94a6; margin-bottom:1.2vw; text-align:center;">
+            Si un dato supera estos valores, ese tramo de la tendencia se marca en rojo. Deja un campo vacío para no vigilar ese dato.
+        </div>
+
+        <label style="font-size:0.85vw; font-weight:bold; color:#1a2b4c; display:block; margin-bottom:0.3vw;">Corriente nominal (A)</label>
+        <input id="inputLimiteCorriente" type="number" step="0.01" min="0" placeholder="ej. 15.00"
+               readonly inputmode="none" autocomplete="off" data-decimales="2"
+               style="width:100%; padding:0.7vw; font-size:1vw; border:1px solid #ccc; border-radius:0.5vw; margin-bottom:0.9vw; box-sizing:border-box; -moz-appearance:textfield; -webkit-appearance:none; cursor:pointer; background:#fff;">
+
+        <div style="font-size:0.8vw; color:#8a94a6; margin-top:0.9vw;">
+            El estado "ALARMADO" siempre se marca en rojo en la gráfica de Estado, sin necesidad de configurar nada.
+        </div>
+
+        <div style="display:flex; gap:1vw; justify-content:center; margin-top:1.4vw;">
+            <button id="configLimitesCancelar" onclick="cerrarConfigLimites()" style="padding:0.8vw 1.6vw; font-size:1.05vw; border:none; border-radius:0.5vw; background:#8a94a6; color:white; font-weight:bold; cursor:pointer;">Cancelar</button>
+            <button id="configLimitesGuardar" onclick="guardarConfigLimites()" style="padding:0.8vw 1.6vw; font-size:1.05vw; border:none; border-radius:0.5vw; background:#0f62fe; color:white; font-weight:bold; cursor:pointer;">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: CUÁNTAS VECES SE SOBREPASÓ EL LÍMITE (NUEVO) ========== -->
+<div id="modalEstadisticasExcesos" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:1vw; padding:2.2vw; width:85%; max-width:480px;
+                box-shadow:0 0.5vw 2vw rgba(0,0,0,0.3); text-align:left; font-family:Arial, sans-serif;">
+        <div id="estadisticasExcesosTitulo" style="font-size:1.25vw; font-weight:bold; color:#1a2b4c; margin-bottom:0.3vw; text-align:center;">📊 Veces excedido</div>
+        <div id="estadisticasExcesosRango" style="font-size:0.8vw; color:#8a94a6; margin-bottom:1.1vw; text-align:center;"></div>
+        <table style="width:100%; border-collapse:collapse; font-size:0.95vw;">
+            <thead>
+                <tr>
+                    <th style="text-align:left; padding:0.6vw; border-bottom:2px solid #0f62fe;">Condición</th>
+                    <th style="text-align:center; padding:0.6vw; border-bottom:2px solid #0f62fe;">Veces</th>
+                </tr>
+            </thead>
+            <tbody id="estadisticasExcesosCuerpo"></tbody>
+        </table>
+        <div style="font-size:0.75vw; color:#8a94a6; margin-top:0.9vw; text-align:center;">
+            Se cuenta cada vez que el valor cruzó el límite (no cada dato), dentro del rango que se ve en la gráfica: en vivo (últimos 30 min) o el histórico cargado.
+        </div>
+        <div style="display:flex; justify-content:center; margin-top:1.3vw;">
+            <button onclick="cerrarEstadisticasExcesos()" style="padding:0.8vw 1.6vw; font-size:1.05vw; border:none; border-radius:0.5vw; background:#0f62fe; color:white; font-weight:bold; cursor:pointer;">Cerrar</button>
         </div>
     </div>
 </div>
@@ -1384,6 +1591,8 @@ aplicarTemaGuardado();
 
 </script>
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<!-- Librería para generar el archivo Excel del histórico (con formato: centrado, anchos, etc.) directamente en el navegador. No toca nada del MQTT -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const topicVar = "lurin/factory/bombas/var";
@@ -1847,6 +2056,14 @@ function normalizarRetardoPresion() {
         client.publish(topicControl, "retardoPresion:" + v.toFixed(1));
     }
 }
+function normalizarLimiteCorriente() {
+    const el = document.getElementById("inputLimiteCorriente");
+    if (!el || el.value === "") return; // vacío = no vigilar ese dato, se deja tal cual
+    let v = parseFloat(el.value);
+    if (isNaN(v) || v < 0) v = 0;
+    el.value = v.toFixed(2);
+}
+
 function normalizarPresionMinima() {
     let v = parseFloat(inputPresionMinima.value) || 0.00;
     v = Math.min(145.00, Math.max(0.00, v));
@@ -1998,13 +2215,15 @@ const tecladoNumAceptar  = document.getElementById("tecladoNumAceptar");
 
 let inputActivoTeclado = null;
 let bufferTecladoNum = "";
+let bufferEsValorPrevio = false; // true justo al abrir el teclado: el primer toque debe reemplazar el valor, no pegarse a él
 
 const configTecladoNum = {
     inputFreqProceso:    { titulo: "Frecuencia · Variador Bomba Sumergible",         decimales: 2, normalizar: normalizarFreqProceso },
     inputFreq2Proceso:   { titulo: "Frecuencia · Variador Bombas de Suministro",     decimales: 2, normalizar: normalizarFreq2Proceso },
     inputRetardoPresion: { titulo: "Retardo de Tolerancia de Presión",               decimales: 1, normalizar: normalizarRetardoPresion },
     inputPresionMinima:  { titulo: "Presión Mínima de Suministro",                   decimales: 2, normalizar: normalizarPresionMinima },
-    inputReintentos:     { titulo: "Cantidad de Reintentos por Falta de Presión",    decimales: 0, normalizar: normalizarReintentos }
+    inputReintentos:     { titulo: "Cantidad de Reintentos por Falta de Presión",    decimales: 0, normalizar: normalizarReintentos },
+    inputLimiteCorriente:{ titulo: "Corriente nominal (A)",                          decimales: 2, normalizar: normalizarLimiteCorriente, permiteVacio: true }
 };
 
 function abrirTecladoNumerico(input) {
@@ -2017,6 +2236,7 @@ function abrirTecladoNumerico(input) {
     bufferTecladoNum = input.value ? String(input.value) : "";
     tecladoNumDisplay.innerText = bufferTecladoNum || "0";
     tecladoNumPunto.style.visibility = cfg.decimales > 0 ? "visible" : "hidden";
+    bufferEsValorPrevio = true; // se ve el valor actual, pero al tocar la primera tecla se reemplaza, no se le pega
 
     modalTecladoNum.style.display = "flex";
 }
@@ -2025,10 +2245,12 @@ function cerrarTecladoNumerico() {
     modalTecladoNum.style.display = "none";
     inputActivoTeclado = null;
     bufferTecladoNum = "";
+    bufferEsValorPrevio = false;
 }
 
 document.querySelectorAll("#modalTecladoNum .tecla-numero[data-tnum]").forEach(btn => {
     btn.addEventListener("click", () => {
+        if (bufferEsValorPrevio) { bufferTecladoNum = ""; bufferEsValorPrevio = false; }
         bufferTecladoNum += btn.dataset.tnum;
         tecladoNumDisplay.innerText = bufferTecladoNum;
         tecladoNumMensaje.innerText = "";
@@ -2039,13 +2261,20 @@ tecladoNumPunto.addEventListener("click", () => {
     if (!inputActivoTeclado) return;
     const cfg = configTecladoNum[inputActivoTeclado.id];
     if (!cfg || cfg.decimales === 0) return;
+    if (bufferEsValorPrevio) { bufferTecladoNum = ""; bufferEsValorPrevio = false; }
     if (bufferTecladoNum.includes(".")) return;
     bufferTecladoNum += bufferTecladoNum === "" ? "0." : ".";
     tecladoNumDisplay.innerText = bufferTecladoNum;
 });
 
 tecladoNumBorrar.addEventListener("click", () => {
-    bufferTecladoNum = bufferTecladoNum.slice(0, -1);
+    if (bufferEsValorPrevio) {
+        // Primer toque es borrar: se entiende como "empezar de cero", no como borrar de a un dígito el valor viejo.
+        bufferTecladoNum = "";
+        bufferEsValorPrevio = false;
+    } else {
+        bufferTecladoNum = bufferTecladoNum.slice(0, -1);
+    }
     tecladoNumDisplay.innerText = bufferTecladoNum || "0";
 });
 
@@ -2057,6 +2286,11 @@ tecladoNumAceptar.addEventListener("click", () => {
     if (!cfg) return;
 
     if (bufferTecladoNum === "" || bufferTecladoNum === ".") {
+        if (cfg.permiteVacio) {
+            inputActivoTeclado.value = "";
+            cerrarTecladoNumerico();
+            return;
+        }
         tecladoNumMensaje.innerText = "Ingresa un valor";
         return;
     }
@@ -2091,14 +2325,247 @@ const mapaEstadoNumero = { "APAGADO": 0, "DESCONOCIDO": 0, "ENCENDIDO": 1, "ALAR
 const MAX_MINUTOS_MEMORIA = 30;
 const instanciasChart = { 1: {}, 2: {} };
 
+// ---------- Histórico desde Google Sheets (vía Apps Script) ----------
+// Misma URL de Web App que usa el ESP32 en sendToSheets() (SHEETS_URL).
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwl_lDvTEmNd9yraPbZbHf7tjsZWUd-AdgdP-_mdcKsNIwwe0LwFwyrbGpWIXkltSSOkw/exec";
+const modoTendencia   = { 1: "vivo", 2: "vivo" }; // "vivo" | "historico"
+const datosHistoricos = { 1: [], 2: [] };
+// Guarda las filas TAL CUAL las devuelve Google Sheets (mismas columnas de la hoja),
+// solo para poder generar el Excel a descargar sin tocar nada del resto.
+const datosHistoricosCrudos = { 1: [], 2: [] };
+
+function obtenerDatosActivos(n) {
+    return modoTendencia[n] === "historico" ? datosHistoricos[n] : historialTendencia[n];
+}
+
 function registrarPuntoHistorial(n, punto) {
     historialTendencia[n].push(punto);
     const limite = Date.now() - MAX_MINUTOS_MEMORIA * 60 * 1000;
     historialTendencia[n] = historialTendencia[n].filter(p => p.t >= limite);
 
+    // Si el usuario está viendo un histórico, no lo interrumpimos con datos en vivo.
+    if (modoTendencia[n] === "historico") return;
+
     const pantalla = document.getElementById("tendenciaScreen" + n);
     if (pantalla && pantalla.style.display !== "none") {
-        dibujarGraficosTendencia(n, historialTendencia[n]);
+        dibujarGraficosTendencia(n);
+    }
+}
+
+// Google Sheets/Apps Script puede mandar "fecha" y "hora" como texto plano ("2026-08-30", "17:56:14")
+// o como fecha/hora serializada (Apps Script convierte celdas de fecha/hora en objetos Date, que al
+// pasar por JSON.stringify salen como texto ISO con zona horaria, ej: "1899-12-30T22:35:10.000Z" para
+// una celda que en Sheets solo tiene la hora). Esta función entiende ambos casos y siempre entrega
+// una fecha "AAAA-MM-DD" y una hora "HH:MM:SS" limpias, más el timestamp real para el gráfico.
+function extraerFechaHoraSheets(fila) {
+    const pad = (v) => String(v).padStart(2, "0");
+
+    let anio, mes, dia, fechaValida = false;
+    if (typeof fila.fecha === "string" && /^\d{4}-\d{2}-\d{2}/.test(fila.fecha)) {
+        anio = fila.fecha.slice(0, 4);
+        mes = fila.fecha.slice(5, 7);
+        dia = fila.fecha.slice(8, 10);
+        fechaValida = true;
+    } else {
+        const dFecha = new Date(fila.fecha);
+        if (!isNaN(dFecha.getTime())) {
+            anio = dFecha.getFullYear();
+            mes = pad(dFecha.getMonth() + 1);
+            dia = pad(dFecha.getDate());
+            fechaValida = true;
+        }
+    }
+
+    let hh, mm, ss, horaValida = false;
+    if (typeof fila.hora === "string" && /^\d{1,2}:\d{2}:\d{2}/.test(fila.hora)) {
+        const partes = fila.hora.split(":");
+        hh = pad(partes[0]);
+        mm = pad(partes[1]);
+        ss = pad(partes[2]);
+        horaValida = true;
+    } else {
+        const dHora = new Date(fila.hora);
+        if (!isNaN(dHora.getTime())) {
+            hh = pad(dHora.getHours());
+            mm = pad(dHora.getMinutes());
+            ss = pad(dHora.getSeconds());
+            horaValida = true;
+        }
+    }
+
+    const fechaTexto = fechaValida ? (anio + "-" + mes + "-" + dia) : String(fila.fecha);
+    const horaTexto = horaValida ? (hh + ":" + mm + ":" + ss) : String(fila.hora);
+
+    let t;
+    if (fechaValida && horaValida) {
+        t = new Date(Number(anio), Number(mes) - 1, Number(dia), Number(hh), Number(mm), Number(ss)).getTime();
+    } else {
+        t = Date.now();
+    }
+
+    return { t, fechaTexto, horaTexto };
+}
+
+// Convierte una fila del Apps Script (fecha,hora,freq,volt,amp,pot,status)
+// al mismo formato { t, estado, potencia, corriente, voltaje, frecuencia }
+// que ya usa el gráfico en vivo.
+function convertirFilaSheets(fila) {
+    const { t } = extraerFechaHoraSheets(fila);
+    return {
+        t,
+        estado: mapaEstadoNumero.hasOwnProperty(fila.status) ? mapaEstadoNumero[fila.status] : 0,
+        potencia: Number(fila.pot),
+        corriente: Number(fila.amp),
+        voltaje: Number(fila.volt),
+        frecuencia: Number(fila.freq)
+    };
+}
+
+async function cargarHistorico(n) {
+    const inputFecha = document.getElementById("fechaHistorico" + n);
+    const mensaje = document.getElementById("tendenciaMensaje" + n);
+    const fecha = inputFecha.value;
+
+    if (!fecha) {
+        mensaje.innerText = "Elige una fecha primero.";
+        return;
+    }
+
+    mensaje.innerText = "Cargando datos del " + fecha + "...";
+
+    try {
+        const url = GAS_URL + "?fecha=" + encodeURIComponent(fecha) + "&variador=V" + n;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        const json = await resp.json();
+
+        if (json.error) {
+            mensaje.innerText = "Error: " + json.error;
+            return;
+        }
+
+        const filas = json.datos || [];
+        const btnDescargar = document.getElementById("btnDescargarExcel" + n);
+        if (filas.length === 0) {
+            mensaje.innerText = "No hay datos guardados para el " + fecha + ".";
+            datosHistoricos[n] = [];
+            datosHistoricosCrudos[n] = [];
+            if (btnDescargar) btnDescargar.disabled = true;
+        } else {
+            datosHistoricos[n] = filas.map(convertirFilaSheets).sort((a, b) => a.t - b.t);
+            datosHistoricosCrudos[n] = filas;
+            mensaje.innerText = filas.length + " registros del " + fecha + ".";
+            if (btnDescargar) btnDescargar.disabled = false;
+        }
+
+        modoTendencia[n] = "historico";
+        document.getElementById("btnVivo" + n).classList.remove("modo-activo");
+        document.getElementById("tendenciaNota" + n).innerText =
+            "Mostrando histórico guardado en Google Sheets para el " + fecha + ".";
+        dibujarGraficosTendencia(n);
+    } catch (err) {
+        console.error("Error cargando histórico:", err);
+        mensaje.innerText = "No se pudo cargar el histórico. Revisa tu conexión.";
+        const btnDescargar = document.getElementById("btnDescargarExcel" + n);
+        if (btnDescargar) btnDescargar.disabled = true;
+    }
+}
+
+function verEnVivo(n) {
+    modoTendencia[n] = "vivo";
+    document.getElementById("btnVivo" + n).classList.add("modo-activo");
+    document.getElementById("tendenciaMensaje" + n).innerText = "";
+    document.getElementById("tendenciaNota" + n).innerText =
+        "Esta gráfica muestra los últimos 30 minutos en vivo, mientras esta página esté abierta en el navegador.";
+    const btnDescargar = document.getElementById("btnDescargarExcel" + n);
+    if (btnDescargar) btnDescargar.disabled = true; // la descarga es solo para el histórico ya cargado
+    dibujarGraficosTendencia(n);
+}
+
+// ---------- NUEVO: descargar el histórico cargado como archivo Excel, desde la misma página ----------
+// Queda centrado y con las columnas ajustadas al contenido, igual que se ve en Google Sheets.
+async function descargarExcelHistorico(n) {
+    const filas = datosHistoricosCrudos[n];
+    if (!filas || filas.length === 0) return;
+
+    const btnDescargar = document.getElementById("btnDescargarExcel" + n);
+    const textoOriginal = btnDescargar ? btnDescargar.textContent : "";
+    if (btnDescargar) { btnDescargar.disabled = true; btnDescargar.textContent = "Generando..."; }
+
+    try {
+        const libro = new ExcelJS.Workbook();
+        const hoja = libro.addWorksheet("Historico_V" + n, { views: [{ state: "frozen", ySplit: 1 }] });
+
+        const columnas = [
+            { header: "Fecha", key: "fecha" },
+            { header: "Hora", key: "hora" },
+            { header: "Frecuencia (Hz)", key: "frecuencia" },
+            { header: "Voltaje (V)", key: "voltaje" },
+            { header: "Corriente (A)", key: "corriente" },
+            { header: "Potencia (kW)", key: "potencia" },
+            { header: "Estado", key: "estado" }
+        ];
+        hoja.columns = columnas;
+
+        filas.forEach(f => {
+            const { fechaTexto, horaTexto } = extraerFechaHoraSheets(f);
+            hoja.addRow({
+                fecha: fechaTexto,
+                hora: horaTexto,
+                frecuencia: Number(f.freq),
+                voltaje: Number(f.volt),
+                corriente: Number(f.amp),
+                potencia: Number(f.pot),
+                estado: f.status
+            });
+        });
+
+        // Encabezado: negrita, centrado y con color, igual que la fila de títulos en Sheets.
+        const filaEncabezado = hoja.getRow(1);
+        filaEncabezado.eachCell(celda => {
+            celda.font = { bold: true, color: { argb: "FF1A2B4C" } };
+            celda.alignment = { horizontal: "center", vertical: "middle" };
+            celda.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFC2F1FA" } };
+            celda.border = { bottom: { style: "thin", color: { argb: "FF8A94A6" } } };
+        });
+
+        // Todos los datos centrados, igual que en la hoja de Google Sheets.
+        hoja.eachRow((fila, indice) => {
+            if (indice === 1) return;
+            fila.eachCell(celda => {
+                celda.alignment = { horizontal: "center", vertical: "middle" };
+            });
+        });
+
+        // Ancho de columna ajustado al contenido más largo de cada una (auto-fit).
+        hoja.columns.forEach(col => {
+            let maximo = String(col.header).length;
+            col.eachCell({ includeEmpty: true }, celda => {
+                const texto = celda.value != null ? String(celda.value) : "";
+                if (texto.length > maximo) maximo = texto.length;
+            });
+            col.width = maximo + 3;
+        });
+
+        const buffer = await libro.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+
+        const fecha = document.getElementById("fechaHistorico" + n).value || "historico";
+        const nombreVar = n === 1 ? "BombaSumergible" : "BombasSuministro";
+        const nombreArchivo = "DARIZA_" + nombreVar + "_" + fecha + ".xlsx";
+
+        const enlace = document.createElement("a");
+        enlace.href = URL.createObjectURL(blob);
+        enlace.download = nombreArchivo;
+        document.body.appendChild(enlace);
+        enlace.click();
+        document.body.removeChild(enlace);
+        URL.revokeObjectURL(enlace.href);
+    } catch (err) {
+        console.error("Error generando el Excel:", err);
+        document.getElementById("tendenciaMensaje" + n).innerText = "No se pudo generar el Excel.";
+    } finally {
+        if (btnDescargar) { btnDescargar.disabled = false; btnDescargar.textContent = textoOriginal; }
     }
 }
 
@@ -2141,7 +2608,7 @@ function abrirTendencia(n) {
     document.querySelectorAll(".screen").forEach(el => el.style.display = "none");
     document.getElementById("navButtons").style.display = "none";
     document.getElementById("tendenciaScreen" + n).style.display = "flex";
-    dibujarGraficosTendencia(n, historialTendencia[n]);
+    dibujarGraficosTendencia(n);
 }
 
 function regresarDesdeTendencia() {
@@ -2164,67 +2631,252 @@ function cambiarMetricaTendencia(n, metricaId) {
     });
     const btnActivo = document.getElementById("tabMetrica" + n + "-" + metricaId);
     if (btnActivo) btnActivo.classList.add("tab-activo");
-    dibujarGraficosTendencia(n, historialTendencia[n]);
+    dibujarGraficosTendencia(n);
 }
+
+// ---------- Límites de alarma configurables (por variador, guardados en el navegador) ----------
+const limitesTendencia = {
+    1: { corriente: null, potencia: null, voltMin: null, voltMax: null },
+    2: { corriente: null, potencia: null, voltMin: null, voltMax: null }
+};
+let variadorConfigActivo = null;
+
+function cargarLimitesGuardados() {
+    try {
+        const guardado = JSON.parse(localStorage.getItem("darizaLimitesTendencia") || "{}");
+        [1, 2].forEach(n => {
+            if (guardado[n]) Object.assign(limitesTendencia[n], guardado[n]);
+        });
+    } catch (e) {
+        console.error("No se pudieron leer los límites guardados:", e);
+    }
+}
+function guardarLimitesEnStorage() {
+    try {
+        localStorage.setItem("darizaLimitesTendencia", JSON.stringify(limitesTendencia));
+    } catch (e) {
+        console.error("No se pudieron guardar los límites:", e);
+    }
+}
+cargarLimitesGuardados();
+
+function abrirConfigLimites(n) {
+    variadorConfigActivo = n;
+    const nombreVar = n === 1 ? "Variador 1 · Bomba Sumergible" : "Variador 2 · Bombas de Suministro";
+    document.getElementById("configLimitesTitulo").textContent = "⚙ Límites de alarma · " + nombreVar;
+    const l = limitesTendencia[n];
+    document.getElementById("inputLimiteCorriente").value = l.corriente ?? "";
+    document.getElementById("modalConfigLimites").style.display = "flex";
+}
+function cerrarConfigLimites() {
+    document.getElementById("modalConfigLimites").style.display = "none";
+    variadorConfigActivo = null;
+}
+function guardarConfigLimites() {
+    if (!variadorConfigActivo) return;
+    const n = variadorConfigActivo;
+    const leer = id => {
+        const v = document.getElementById(id).value;
+        return v === "" ? null : parseFloat(v);
+    };
+    // potencia/voltMin/voltMax se dejan en null: ya no se configuran, solo se vigila corriente.
+    limitesTendencia[n] = {
+        corriente: leer("inputLimiteCorriente"),
+        potencia: null,
+        voltMin: null,
+        voltMax: null
+    };
+    guardarLimitesEnStorage();
+    cerrarConfigLimites();
+    dibujarGraficosTendencia(n);
+}
+document.getElementById("modalConfigLimites").addEventListener("click", (e) => {
+    if (e.target.id === "modalConfigLimites") cerrarConfigLimites();
+});
 
 // ---------- Dibujo del gráfico único (según la pestaña activa) con Chart.js ----------
 const definicionMetricas = [
-    { id: "estado",     key: "estado",     label: "Estado (0=Apagado/Desconocido, 1=Encendido, 2=Alarmado)", stepped: true, min: 0, max: 2 },
-    { id: "potencia",   key: "potencia",   label: "Potencia (kW)" },
-    { id: "corriente",  key: "corriente",  label: "Corriente (A)" },
-    { id: "voltaje",    key: "voltaje",    label: "Voltaje (V)" },
-    { id: "frecuencia", key: "frecuencia", label: "Frecuencia (Hz)" }
+    { id: "estado",     key: "estado",     label: "Estado (0=Apagado/Desconocido, 1=Encendido, 2=Alarmado)", stepped: true, min: 0, max: 2, decimales: 0, stepSize: 1 },
+    { id: "potencia",   key: "potencia",   label: "Potencia (kW)",  decimales: 2 },
+    { id: "corriente",  key: "corriente",  label: "Corriente (A)",  decimales: 2 },
+    { id: "voltaje",    key: "voltaje",    label: "Voltaje (V)",    decimales: 0 },
+    { id: "frecuencia", key: "frecuencia", label: "Frecuencia (Hz)", decimales: 2 }
 ];
 
-function dibujarGraficosTendencia(n, datos) {
+// Decide si un punto de la métrica activa debe pintarse en rojo (fuera de límite o ALARMADO).
+function esAlerta(m, valor, limites) {
+    if (valor === null || valor === undefined || isNaN(valor)) return false;
+    if (m.id === "estado") return valor === 2; // ALARMADO
+    if (!limites) return false;
+    if (m.id === "corriente" && limites.corriente != null) return valor > limites.corriente;
+    if (m.id === "potencia" && limites.potencia != null) return valor > limites.potencia;
+    if (m.id === "voltaje") {
+        if (limites.voltMin != null && valor < limites.voltMin) return true;
+        if (limites.voltMax != null && valor > limites.voltMax) return true;
+    }
+    return false;
+}
+
+function dibujarGraficosTendencia(n) {
+    const datos = obtenerDatosActivos(n);
     const m = definicionMetricas.find(x => x.id === metricaActiva[n]) || definicionMetricas[0];
     const canvasId = "chartTendenciaV" + n;
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
 
+    const limites = limitesTendencia[n];
     const labels = datos.map(p => formatearHora(p.t));
     const valores = datos.map(p => p[m.key]);
+    const colorNormal = "#0f62fe";
+    const colorAlerta = "#d92b2b";
 
+    const datasets = [{
+        label: m.label,
+        data: valores,
+        borderColor: colorNormal,
+        backgroundColor: "rgba(15,98,254,0.15)",
+        tension: 0.25,
+        pointRadius: (c) => esAlerta(m, valores[c.dataIndex], limites) ? 3 : 0,
+        pointBackgroundColor: colorAlerta,
+        pointBorderColor: colorAlerta,
+        stepped: m.stepped || false,
+        fill: true,
+        segment: {
+            borderColor: (c) => esAlerta(m, c.p1.parsed.y, limites) ? colorAlerta : colorNormal
+        }
+    }];
+
+    // Líneas guía punteadas para los límites configurados (solo si aplica a esta métrica)
+    const lineaGuia = (valor, etiqueta) => ({
+        label: etiqueta,
+        data: new Array(labels.length).fill(valor),
+        borderColor: "rgba(217,43,43,0.55)",
+        borderDash: [6, 4],
+        borderWidth: 1.3,
+        pointRadius: 0,
+        fill: false,
+        tension: 0
+    });
+    if (limites) {
+        if (m.id === "corriente" && limites.corriente != null) {
+            datasets.push(lineaGuia(limites.corriente, "Corriente nominal"));
+        } else if (m.id === "potencia" && limites.potencia != null) {
+            datasets.push(lineaGuia(limites.potencia, "Potencia nominal"));
+        } else if (m.id === "voltaje") {
+            if (limites.voltMin != null) datasets.push(lineaGuia(limites.voltMin, "Voltaje mínimo"));
+            if (limites.voltMax != null) datasets.push(lineaGuia(limites.voltMax, "Voltaje máximo"));
+        }
+    }
+
+    // Se destruye y se vuelve a crear en cada dibujo: así los datasets de las líneas guía
+    // (que cambian de cantidad según la métrica y los límites configurados) siempre calzan bien.
     if (instanciasChart[n].actual) {
-        const chart = instanciasChart[n].actual;
-        chart.data.labels = labels;
-        chart.data.datasets[0].data = valores;
-        chart.data.datasets[0].label = m.label;
-        chart.data.datasets[0].stepped = m.stepped || false;
-        chart.options.scales.y.min = m.min;
-        chart.options.scales.y.max = m.max;
-        chart.update();
-    } else {
-        instanciasChart[n].actual = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: m.label,
-                    data: valores,
-                    borderColor: "#0f62fe",
-                    backgroundColor: "rgba(15,98,254,0.15)",
-                    tension: 0.25,
-                    pointRadius: 0,
-                    stepped: m.stepped || false,
-                    fill: true
-                }]
+        instanciasChart[n].actual.destroy();
+    }
+    instanciasChart[n].actual = new Chart(ctx, {
+        type: "line",
+        data: { labels: labels, datasets: datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            scales: {
+                x: { ticks: { maxTicksLimit: 10, color: "#8a94a6", font: { size: 11 } } },
+                y: {
+                    min: m.min,
+                    max: m.max,
+                    ticks: {
+                        color: "#8a94a6",
+                        font: { size: 11 },
+                        stepSize: m.stepSize,
+                        callback: (valor) => Number(valor).toFixed(m.decimales)
+                    }
+                }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                scales: {
-                    x: { ticks: { maxTicksLimit: 10, color: "#8a94a6", font: { size: 11 } } },
-                    y: { min: m.min, max: m.max, ticks: { color: "#8a94a6", font: { size: 11 } } }
-                },
-                plugins: {
-                    legend: { display: true, labels: { color: "#555", font: { size: 13 } } }
+            plugins: {
+                legend: { display: true, labels: { color: "#555", font: { size: 13 } } },
+                tooltip: {
+                    callbacks: {
+                        label: (c) => c.dataset.label + ": " + Number(c.parsed.y).toFixed(m.decimales)
+                    }
                 }
             }
+        }
+    });
+}
+
+// ---------- NUEVO: contador de "veces que se sobrepasó el límite" (tablita) ----------
+// Cuenta CRUCES hacia el exceso (de "normal" a "excedido"), no cada dato repetido,
+// para que el número represente eventos reales y no solo cuántos puntos hay guardados.
+function contarCrucesExceso(datos, obtenerValor, estaExcedido) {
+    let veces = 0;
+    let estabaExcedido = false;
+    datos.forEach(p => {
+        const v = obtenerValor(p);
+        const excedidoAhora = estaExcedido(v);
+        if (excedidoAhora && !estabaExcedido) veces++;
+        estabaExcedido = excedidoAhora;
+    });
+    return veces;
+}
+
+function calcularEstadisticasExcesos(n) {
+    const datos = obtenerDatosActivos(n);
+    const limites = limitesTendencia[n];
+    const filas = [];
+
+    filas.push({
+        etiqueta: "Entró en ALARMA (estado)",
+        veces: contarCrucesExceso(datos, p => p.estado, v => v === 2)
+    });
+    if (limites.corriente != null) {
+        filas.push({
+            etiqueta: "Corriente > " + limites.corriente.toFixed(2) + " A",
+            veces: contarCrucesExceso(datos, p => p.corriente, v => v != null && v > limites.corriente)
         });
     }
+    return { filas, hayDatos: datos.length > 0 };
 }
+
+function abrirEstadisticasExcesos(n) {
+    const nombreVar = n === 1 ? "Variador 1 · Bomba Sumergible" : "Variador 2 · Bombas de Suministro";
+    document.getElementById("estadisticasExcesosTitulo").textContent = "📊 Veces excedido · " + nombreVar;
+
+    const rango = modoTendencia[n] === "historico"
+        ? "Histórico del " + (document.getElementById("fechaHistorico" + n).value || "-")
+        : "Últimos 30 minutos en vivo";
+    document.getElementById("estadisticasExcesosRango").textContent = rango;
+
+    const { filas, hayDatos } = calcularEstadisticasExcesos(n);
+    const cuerpo = document.getElementById("estadisticasExcesosCuerpo");
+    if (!hayDatos) {
+        cuerpo.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:1vw; color:#8a94a6;">Todavía no hay datos registrados en este rango.</td></tr>';
+    } else {
+        cuerpo.innerHTML = filas.map(f =>
+            '<tr><td style="padding:0.6vw; border-bottom:1px solid #eee;">' + f.etiqueta + '</td>' +
+            '<td style="padding:0.6vw; border-bottom:1px solid #eee; text-align:center; font-weight:bold; color:' + (f.veces > 0 ? '#d92b2b' : '#1a2b4c') + ';">' + f.veces + '</td></tr>'
+        ).join("");
+    }
+    document.getElementById("modalEstadisticasExcesos").style.display = "flex";
+}
+
+function cerrarEstadisticasExcesos() {
+    document.getElementById("modalEstadisticasExcesos").style.display = "none";
+}
+document.getElementById("modalEstadisticasExcesos").addEventListener("click", (e) => {
+    if (e.target.id === "modalEstadisticasExcesos") cerrarEstadisticasExcesos();
+});
+
+// Fecha de hoy por defecto en los selectores de fecha del histórico
+document.addEventListener("DOMContentLoaded", () => {
+    const hoy = new Date();
+    const offset = hoy.getTimezoneOffset() * 60000;
+    const hoyStr = new Date(hoy - offset).toISOString().slice(0, 10);
+    [1, 2].forEach(n => {
+        const input = document.getElementById("fechaHistorico" + n);
+        if (input) input.value = hoyStr;
+    });
+});
 </script>
 </body>
 </html>
