@@ -1299,17 +1299,26 @@ window.addEventListener("orientationchange", evaluarOrientacion);
 // ====== TEMA CLARO / OSCURO (botón discreto, plan B) ======
 // Las imágenes con fondo blanco (logo y esquema) tienen una versión "oscura" con
 // fondo transparente, para que no se vea un recuadro blanco feo en modo oscuro.
+function asignarImagenConFallback(img, srcDeseado, srcFallback) {
+    if (!img) return;
+    img.onerror = function () {
+        this.onerror = null; // evita bucles si el fallback también fallara
+        this.src = srcFallback;
+    };
+    img.src = srcDeseado;
+}
+
 function aplicarImagenesSegunTema(activo) {
     const loginLogoImg = document.querySelector("#loginLogo img");
     const mainLogoImg = document.querySelector("#logoContainer img");
     const esquemaImg = document.querySelector(".img-container");
     const tanqueImgs = document.querySelectorAll("#tanque1Img, #tanque2Img, #tanque3Img");
 
-    if (loginLogoImg) loginLogoImg.src = activo ? "logo_oscuro.png" : "logo.jpg";
-    if (mainLogoImg) mainLogoImg.src = activo ? "logo_oscuro.png" : "logo.jpg";
-    if (esquemaImg) esquemaImg.src = activo ? "esquema_oscuro.png" : "esquema.PNG";
+    asignarImagenConFallback(loginLogoImg, activo ? "logo_oscuro.png" : "logo.jpg", "logo.jpg");
+    asignarImagenConFallback(mainLogoImg, activo ? "logo_oscuro.png" : "logo.jpg", "logo.jpg");
+    asignarImagenConFallback(esquemaImg, activo ? "esquema_oscuro.png" : "esquema.PNG", "esquema.PNG");
     tanqueImgs.forEach(img => {
-        img.src = activo ? "lleno_oscuro.png" : "lleno.gif";
+        asignarImagenConFallback(img, activo ? "lleno_oscuro.png" : "lleno.gif", "lleno.gif");
     });
 }
 
