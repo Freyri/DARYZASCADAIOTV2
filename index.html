@@ -424,11 +424,87 @@ body.tema-oscuro {
 }
 
 body.tema-oscuro #fullscreenBtn {
-  background: rgba(15,32,56,0.65) !important;
+  background: transparent !important;
   color: #22D3EE !important;
-  border: 1px solid rgba(34,211,238,0.35) !important;
-  border-radius: 10px !important;
+  border: none !important;
+  box-shadow: none !important;
 }
+
+/* ===== PANTALLAS DE TENDENCIA (NUEVO) ===== */
+#tendenciaScreen1, #tendenciaScreen2 {
+  padding: 1.5vw 2vw;
+  box-sizing: border-box;
+  overflow-y: auto;
+  background: #fff;
+  align-items: stretch;
+}
+.tendencia-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1vw;
+}
+.tendencia-titulo {
+  font-size: 1.6vw;
+  font-weight: bold;
+  color: #1a2b4c;
+  font-family: Arial, sans-serif;
+}
+.tendencia-volver {
+  padding: 0.7vw 1.4vw;
+  font-size: 1.1vw;
+  background: #0f62fe;
+  color: white;
+  border: none;
+  border-radius: 0.4vw;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 3vw;
+}
+.tendencia-controles {
+  display: flex;
+  align-items: center;
+  gap: 0.8vw;
+  margin-bottom: 1vw;
+  flex-wrap: wrap;
+  font-family: Arial, sans-serif;
+}
+.tendencia-mensaje {
+  color: #d92b2b;
+  font-size: 0.9vw;
+  font-family: Arial, sans-serif;
+}
+.tendencia-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2vw;
+}
+.tendencia-grafico {
+  height: 20vh;
+  background: #f7f9fc;
+  border: 1px solid #eef0f4;
+  border-radius: 0.5vw;
+  padding: 0.5vw;
+  box-sizing: border-box;
+}
+.tendencia-grafico.grafico-ancho {
+  grid-column: span 2;
+}
+.tendencia-nota {
+  font-size: 0.8vw;
+  color: #8a94a6;
+  margin-top: 0.8vw;
+  font-family: Arial, sans-serif;
+}
+body.tema-oscuro #tendenciaScreen1, body.tema-oscuro #tendenciaScreen2 {
+  background: #0A1628 !important;
+}
+body.tema-oscuro .tendencia-titulo { color: #EAF1FB !important; }
+body.tema-oscuro .tendencia-grafico {
+  background: rgba(19,40,70,0.5) !important;
+  border: 1px solid rgba(124,202,230,0.25) !important;
+}
+body.tema-oscuro .tendencia-nota { color: #7C90B3 !important; }
 
 body.tema-oscuro #loginBox {
   background: linear-gradient(180deg, rgba(19,40,70,0.92), rgba(10,22,40,0.94)) !important;
@@ -727,12 +803,12 @@ body.tema-oscuro #logoContainer img {
 
 
 <div id="monitoreoScreen" class="screen">
-  <!-- TITULOS DE VARIADORES -->
-  <div class="textoProcesoBox" style="top: 3%; left: 16%;">
+  <!-- TITULOS DE VARIADORES (disimulados como botones hacia la pantalla de tendencia) -->
+  <div class="textoProcesoBox" style="top: 3%; left: 16%; cursor:pointer; z-index:20;" onclick="abrirTendencia(1)">
      <p class="textoProceso">VARIADOR DE BOMBA<br>SUMERGIBLE</p>
   </div>
 
-  <div class="textoProcesoBox" style="top: 3%; left: 67.9%;">
+  <div class="textoProcesoBox" style="top: 3%; left: 67.9%; cursor:pointer; z-index:20;" onclick="abrirTendencia(2)">
      <p class="textoProceso">VARIADOR DE BOMBAS<br>DE SUMINISTRO</p>
   </div>
 
@@ -810,15 +886,55 @@ body.tema-oscuro #logoContainer img {
   <div class="textoProcesoBox2" style="top: 74%; left: 8.8%; background: yellow; border: 1px solid #000; flex-direction: row; align-items: center; justify-content: space-between;">
    <input id="inputFreqProceso" type="number" min="0" max="60" step="0.01"
            readonly inputmode="none" autocomplete="off" data-decimales="2"
-           style="flex: 1; height: 100%; font-size:1.2vw; font-weight:bold; text-align:center; border:none; background: yellow; -moz-appearance:textfield; -webkit-appearance:none; cursor:pointer;">
+           style="flex: 1; height: 100%; font-size:1.8vw; font-weight:bold; text-align:center; border:none; background: yellow; -moz-appearance:textfield; -webkit-appearance:none; cursor:pointer;">
    <span class="textoProcesoTransparente" style="margin-right:0.4vw; white-space:nowrap;">Hz</span>
   </div>
   <div class="textoProcesoBox2" style="top: 74%; left: 60.8%; background: yellow; border: 1px solid #000; flex-direction: row; align-items: center; justify-content: space-between;">
    <input id="inputFreq2Proceso" type="number" min="0" max="60" step="0.01"
            readonly inputmode="none" autocomplete="off" data-decimales="2"
-           style="flex: 1; height: 100%; font-size:1.2vw; font-weight:bold; text-align:center; border:none; background: yellow; -moz-appearance:textfield; -webkit-appearance:none; cursor:pointer;">
+           style="flex: 1; height: 100%; font-size:1.8vw; font-weight:bold; text-align:center; border:none; background: yellow; -moz-appearance:textfield; -webkit-appearance:none; cursor:pointer;">
    <span class="textoProcesoTransparente" style="margin-right:0.4vw; white-space:nowrap;">Hz</span>
   </div>
+</div>
+
+<!-- ========== PANTALLA DE TENDENCIA · VARIADOR 1 (disimulada, sin los 6 botones) ========== -->
+<div id="tendenciaScreen1" class="screen">
+  <div class="tendencia-header">
+    <button class="tendencia-volver" onclick="regresarDesdeTendencia()">← Regresar</button>
+    <div class="tendencia-titulo">Tendencia · Variador de Bomba Sumergible</div>
+    <div style="width:8vw;"></div>
+  </div>
+  <div class="tendencia-controles">
+    <span id="tendenciaMensaje1" class="tendencia-mensaje"></span>
+  </div>
+  <div class="tendencia-grid">
+    <div class="tendencia-grafico"><canvas id="chartEstadoV1"></canvas></div>
+    <div class="tendencia-grafico"><canvas id="chartPotenciaV1"></canvas></div>
+    <div class="tendencia-grafico"><canvas id="chartCorrienteV1"></canvas></div>
+    <div class="tendencia-grafico"><canvas id="chartVoltajeV1"></canvas></div>
+    <div class="tendencia-grafico grafico-ancho"><canvas id="chartFrecuenciaV1"></canvas></div>
+  </div>
+  <div class="tendencia-nota">Esta gráfica muestra los últimos 30 minutos en vivo, mientras esta página esté abierta en el navegador.</div>
+</div>
+
+<!-- ========== PANTALLA DE TENDENCIA · VARIADOR 2 (disimulada, sin los 6 botones) ========== -->
+<div id="tendenciaScreen2" class="screen">
+  <div class="tendencia-header">
+    <button class="tendencia-volver" onclick="regresarDesdeTendencia()">← Regresar</button>
+    <div class="tendencia-titulo">Tendencia · Variador de Bombas de Suministro</div>
+    <div style="width:8vw;"></div>
+  </div>
+  <div class="tendencia-controles">
+    <span id="tendenciaMensaje2" class="tendencia-mensaje"></span>
+  </div>
+  <div class="tendencia-grid">
+    <div class="tendencia-grafico"><canvas id="chartEstadoV2"></canvas></div>
+    <div class="tendencia-grafico"><canvas id="chartPotenciaV2"></canvas></div>
+    <div class="tendencia-grafico"><canvas id="chartCorrienteV2"></canvas></div>
+    <div class="tendencia-grafico"><canvas id="chartVoltajeV2"></canvas></div>
+    <div class="tendencia-grafico grafico-ancho"><canvas id="chartFrecuenciaV2"></canvas></div>
+  </div>
+  <div class="tendencia-nota">Esta gráfica muestra los últimos 30 minutos en vivo, mientras esta página esté abierta en el navegador.</div>
 </div>
 
 <div id="parametrosScreen" class="screen">
@@ -1217,6 +1333,7 @@ aplicarTemaGuardado();
 
 </script>
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const topicVar = "lurin/factory/bombas/var";
 const topicIO  = "lurin/factory/bombas/io";
@@ -1908,6 +2025,138 @@ Object.keys(configTecladoNum).forEach(id => {
         el.addEventListener("click", () => abrirTecladoNumerico(el));
     }
 });
+</script>
+
+<!-- ================================================================================
+     BLOQUE NUEVO E INDEPENDIENTE: PANTALLAS DE TENDENCIA (histórico de gráficos)
+     No modifica ni reemplaza nada del código anterior. Solo agrega un listener
+     adicional de MQTT (client.on("message", ...) se puede registrar varias veces)
+     para ir guardando los 5 datos de cada variador y poder graficarlos.
+     ================================================================================ -->
+<script>
+// ---------- Almacenamiento en memoria (vive mientras la pestaña esté abierta) ----------
+const historialTendencia = { 1: [], 2: [] };
+const mapaEstadoNumero = { "APAGADO": 0, "DESCONOCIDO": 0, "ENCENDIDO": 1, "ALARMADO": 2 };
+const MAX_MINUTOS_MEMORIA = 30;
+const instanciasChart = { 1: {}, 2: {} };
+
+function registrarPuntoHistorial(n, punto) {
+    historialTendencia[n].push(punto);
+    const limite = Date.now() - MAX_MINUTOS_MEMORIA * 60 * 1000;
+    historialTendencia[n] = historialTendencia[n].filter(p => p.t >= limite);
+
+    const pantalla = document.getElementById("tendenciaScreen" + n);
+    if (pantalla && pantalla.style.display !== "none") {
+        dibujarGraficosTendencia(n, historialTendencia[n]);
+    }
+}
+
+// Segundo listener MQTT: se suma al que ya existe, no lo reemplaza.
+client.on("message", (topic, message) => {
+    if (topic !== topicVar) return;
+    try {
+        const data = JSON.parse(message.toString());
+        const t = Date.now();
+
+        if (data.Status1 !== undefined) {
+            registrarPuntoHistorial(1, {
+                t,
+                estado: mapaEstadoNumero.hasOwnProperty(data.Status1) ? mapaEstadoNumero[data.Status1] : 0,
+                potencia: data.H103 / 10,
+                corriente: data.H102 / 100,
+                voltaje: data.H101,
+                frecuencia: data.H100 / 100
+            });
+        }
+        if (data.Status2 !== undefined) {
+            registrarPuntoHistorial(2, {
+                t,
+                estado: mapaEstadoNumero.hasOwnProperty(data.Status2) ? mapaEstadoNumero[data.Status2] : 0,
+                potencia: data.H203 / 10,
+                corriente: data.H202 / 100,
+                voltaje: data.H201,
+                frecuencia: data.H200 / 100
+            });
+        }
+    } catch (e) {
+        console.error("Error registrando historial de tendencia:", e);
+    }
+});
+
+// ---------- Navegación hacia/desde las pantallas de tendencia ----------
+function abrirTendencia(n) {
+    document.querySelectorAll(".screen").forEach(el => el.style.display = "none");
+    document.getElementById("navButtons").style.display = "none";
+    document.getElementById("tendenciaScreen" + n).style.display = "flex";
+    dibujarGraficosTendencia(n, historialTendencia[n]);
+}
+
+function regresarDesdeTendencia() {
+    document.getElementById("tendenciaScreen1").style.display = "none";
+    document.getElementById("tendenciaScreen2").style.display = "none";
+    document.getElementById("navButtons").style.display = "flex";
+    showScreen("monitoreoScreen");
+}
+
+function formatearHora(ts) {
+    const d = new Date(ts);
+    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + ":" + String(d.getSeconds()).padStart(2, "0");
+}
+
+// ---------- Dibujo de los 5 gráficos con Chart.js ----------
+const definicionMetricas = [
+    { id: "estado",     key: "estado",     label: "Estado (0=Apagado/Desconocido, 1=Encendido, 2=Alarmado)", stepped: true, min: 0, max: 2 },
+    { id: "potencia",   key: "potencia",   label: "Potencia (kW)" },
+    { id: "corriente",  key: "corriente",  label: "Corriente (A)" },
+    { id: "voltaje",    key: "voltaje",    label: "Voltaje (V)" },
+    { id: "frecuencia", key: "frecuencia", label: "Frecuencia (Hz)" }
+];
+
+function dibujarGraficosTendencia(n, datos) {
+    const labels = datos.map(p => formatearHora(p.t));
+
+    definicionMetricas.forEach(m => {
+        const canvasId = "chart" + m.id.charAt(0).toUpperCase() + m.id.slice(1) + "V" + n;
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return;
+        const valores = datos.map(p => p[m.key]);
+
+        if (instanciasChart[n][m.id]) {
+            instanciasChart[n][m.id].data.labels = labels;
+            instanciasChart[n][m.id].data.datasets[0].data = valores;
+            instanciasChart[n][m.id].update();
+        } else {
+            instanciasChart[n][m.id] = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: m.label,
+                        data: valores,
+                        borderColor: "#0f62fe",
+                        backgroundColor: "rgba(15,98,254,0.15)",
+                        tension: 0.25,
+                        pointRadius: 0,
+                        stepped: m.stepped || false,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    scales: {
+                        x: { ticks: { maxTicksLimit: 8, color: "#8a94a6", font: { size: 9 } } },
+                        y: { min: m.min, max: m.max, ticks: { color: "#8a94a6", font: { size: 9 } } }
+                    },
+                    plugins: {
+                        legend: { display: true, labels: { color: "#555", font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+    });
+}
 </script>
 </body>
 </html>
