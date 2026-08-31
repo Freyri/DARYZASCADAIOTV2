@@ -878,9 +878,16 @@ body.tema-oscuro #logoContainer img {
       <img src="logo.jpg" alt="LOGO">
     </div>
   </div>
-  <div id="jarvisIndicador" style="display:none; position:fixed; top:60px; left:50%; transform:translateX(-50%); background:rgba(15,98,254,0.92); color:white; padding:0.6vw 1.4vw; border-radius:2vw; font-size:1.1vw; font-weight:bold; z-index:9998; box-shadow:0 0 1vw rgba(0,0,0,0.35); text-align:center;">
-    🎙️ Modo voz activo · escuchando…
-  </div>
+</div>
+
+<!-- Indicador de modo de voz: FUERA de cualquier pantalla individual (antes estaba dentro de
+     #mainScreen, así que al navegar a otra pantalla el navegador dejaba de pintarlo aunque
+     fuera position:fixed, porque su contenedor padre tenía display:none). Al ponerlo aquí,
+     como hermano directo de las pantallas, se ve sin importar en cuál estés.
+     top pequeño pero NO pegado al borde: queda justo arriba de los títulos/botones de cada
+     pantalla (que empiezan alrededor del 3% superior) en vez de taparlos. -->
+<div id="jarvisIndicador" style="display:none; position:fixed; top:6px; left:50%; transform:translateX(-50%); background:rgba(15,98,254,0.92); color:white; padding:0.35vw 1.2vw; border-radius:2vw; font-size:clamp(11px, 1vw, 15px); font-weight:bold; z-index:100000; box-shadow:0 0 1vw rgba(0,0,0,0.35); text-align:center; pointer-events:none;">
+  🎙️ Modo voz activo · escuchando…
 </div>
 
 <!-- ========== OTRAS PANTALLAS ========== -->
@@ -1513,20 +1520,35 @@ async function login() {
 }
 
 function showScreen(screenId) {
+  // 🔧 FIX: antes esta lista NO incluía "tendenciaScreen1"/"tendenciaScreen2", así que si
+  // estabas viendo una gráfica de tendencia y luego navegabas (por botón O por voz) a otra
+  // pantalla como Monitoreo, la pantalla de tendencia se quedaba con display:flex y ambas
+  // quedaban pintadas una encima de la otra. Ahora showScreen() es la ÚNICA fuente de verdad:
+  // apaga TODAS las pantallas existentes antes de prender la que corresponde.
   const screens = [
     "mainScreen",
     "procesoScreen",
     "monitoreoScreen",
     "parametrosScreen",
     "diagnosticoScreen",
-    "alarmasScreen"
+    "alarmasScreen",
+    "tendenciaScreen1",
+    "tendenciaScreen2"
   ];
 
   screens.forEach(id => {
-    document.getElementById(id).style.display = "none";
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
   });
 
   document.getElementById(screenId).style.display = "flex";
+
+  // La barra de navegación inferior no se muestra dentro de las gráficas de tendencia
+  // (se ocultaba a mano en abrirTendencia/regresarDesdeTendencia; ahora queda centralizado aquí).
+  const nav = document.getElementById("navButtons");
+  if (nav) {
+    nav.style.display = (screenId === "tendenciaScreen1" || screenId === "tendenciaScreen2") ? "none" : "flex";
+  }
 }
 function activarPantallaCompleta() {
   const enPantallaCompleta = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
@@ -2638,16 +2660,11 @@ client.on("message", (topic, message) => {
 const metricaActiva = { 1: "estado", 2: "estado" };
 
 function abrirTendencia(n) {
-    document.querySelectorAll(".screen").forEach(el => el.style.display = "none");
-    document.getElementById("navButtons").style.display = "none";
-    document.getElementById("tendenciaScreen" + n).style.display = "flex";
+    showScreen("tendenciaScreen" + n);
     dibujarGraficosTendencia(n);
 }
 
 function regresarDesdeTendencia() {
-    document.getElementById("tendenciaScreen1").style.display = "none";
-    document.getElementById("tendenciaScreen2").style.display = "none";
-    document.getElementById("navButtons").style.display = "flex";
     showScreen("monitoreoScreen");
 }
 
@@ -3084,6 +3101,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const palabrasVariador1 = ["sumergible","la sumergible","bomba sumergible","variador uno","variador 1","primer variador","el primer variador"];
   const palabrasVariador2 = ["suministro","la suministro","bomba de suministro","bombas de suministro","variador dos","variador 2","segundo variador","el segundo variador"];
 
+  // ---------- Selección de bomba 1 / bomba 2 y modo de bombas alternadas ----------
+  // Verbos propios de "elegir/seleccionar", DISTINTOS de verbosEncender/verbosApagar a propósito:
+  // "activa la bomba 1" debe seguir significando ARRANCAR (startbomba2), no seleccionarla.
+  // Así evitamos que una misma frase dispare dos acciones distintas por ambigüedad.
+  const verbosSeleccionarBomba = [
+    "selecciona","seleccione","selecciona a","seleccionar","elige","elije","escoge","escoja","escoger",
+    "pon en servicio","poner en servicio","usa","usa la","usar la",
+    "cambia a la","cambiate a la","cámbiate a la","pasate a la","pásate a la"
+  ];
+  // Para "activa/desactiva el modo de bombas alternadas" SÍ reutilizamos verbosEncender/verbosApagar
+  // (ya cubren activa, enciende, prende, habilita / desactiva, apaga, deshabilita, etc.), combinados
+  // con estas palabras que no chocan con ningún otro objeto (bomba sumergible, bomba 1, bomba 2, modo auto/manual).
+  const objAlternado = ["modo alternado","modo de bombas alternadas","bombas alternadas","alternado","alternancia","modo alternancia","modo de alternancia"];
+
   // ---------- Coincidencia AND: el verbo y el objeto pueden estar en cualquier orden
   // y con relleno en medio ("prendeme LA bomba uno", "por favor apaga bomba dos", etc.)
   // Esto es más robusto que armar frases pegadas, porque el habla real casi siempre
@@ -3112,6 +3143,16 @@ document.addEventListener("DOMContentLoaded", () => {
       mensajeMqtt: "startbomba3", confirmar: "¿Enciendo la bomba dos de suministro, confirma señor?" },
     { test: frase => coincideAND(frase, verbosApagar, objBomba2),
       mensajeMqtt: "stopbomba3", confirmar: "¿Apago la bomba dos de suministro, confirma señor?" },
+
+    { test: frase => coincideAND(frase, verbosSeleccionarBomba, objBomba1),
+      mensajeMqtt: "selectbomba1", confirmar: "¿Selecciono la bomba uno de suministro, confirma señor?" },
+    { test: frase => coincideAND(frase, verbosSeleccionarBomba, objBomba2),
+      mensajeMqtt: "selectbomba2", confirmar: "¿Selecciono la bomba dos de suministro, confirma señor?" },
+
+    { test: frase => coincideAND(frase, verbosEncender, objAlternado),
+      mensajeMqtt: "selectalternado", confirmar: "¿Activo el modo de bombas alternadas, confirma señor?" },
+    { test: frase => coincideAND(frase, verbosApagar, objAlternado),
+      mensajeMqtt: "selectalternado", confirmar: "¿Desactivo el modo de bombas alternadas, confirma señor?" },
 
     { test: frase => [
         "reintentar","reintenta","hacer reintento","haz un reintento","haz reintento",
@@ -3149,6 +3190,60 @@ document.addEventListener("DOMContentLoaded", () => {
     { test: frase => coincideAND(frase, palabrasTendencia, palabrasVariador2),
       accion: () => abrirTendencia(2), mensajeVoz: "Vamos a la tendencia de las bombas de suministro." }
   ];
+
+  // ---------- Saber a qué variador (1 o 2) está viendo el usuario ahora mismo ----------
+  // Se usa cuando dice "muéstrame la potencia" o "cárgame el histórico del 30 de agosto"
+  // SIN nombrar el variador: si ya está parado en una pantalla de tendencia, se asume esa.
+  function tendenciaAbiertaActual() {
+    const t1 = document.getElementById("tendenciaScreen1");
+    const t2 = document.getElementById("tendenciaScreen2");
+    if (t1 && getComputedStyle(t1).display !== "none") return 1;
+    if (t2 && getComputedStyle(t2).display !== "none") return 2;
+    return null;
+  }
+  function detectarVariadorObjetivo(frase) {
+    if (palabrasVariador1.some(p => contienePalabra(frase, p))) return 1;
+    if (palabrasVariador2.some(p => contienePalabra(frase, p))) return 2;
+    return tendenciaAbiertaActual();
+  }
+
+  // ---------- Fecha hablada: "30 de agosto del 2026" / "30 de agosto" (año actual por defecto) /
+  // "hoy" / "ayer" — devuelve "YYYY-MM-DD" listo para el input de fecha, o null si no hay fecha ----------
+  const nombresMes = {
+    enero:1, febrero:2, marzo:3, abril:4, mayo:5, junio:6,
+    julio:7, agosto:8, septiembre:9, setiembre:9, octubre:10, noviembre:11, diciembre:12
+  };
+  function formatearFechaISO(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function detectarFechaHablada(frase) {
+    if (contienePalabra(frase, "hoy")) return formatearFechaISO(new Date());
+    if (contienePalabra(frase, "ayer")) {
+      const ayer = new Date();
+      ayer.setDate(ayer.getDate() - 1);
+      return formatearFechaISO(ayer);
+    }
+    const m = frase.match(/(\d{1,2})\s*(?:de)?\s*(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\s*(?:de|del)?\s*(\d{4})?/);
+    if (!m) return null;
+    const dia = parseInt(m[1], 10);
+    const mes = nombresMes[m[2]];
+    const anio = m[3] ? parseInt(m[3], 10) : new Date().getFullYear();
+    if (!mes || dia < 1 || dia > 31) return null;
+    return anio + "-" + String(mes).padStart(2, "0") + "-" + String(dia).padStart(2, "0");
+  }
+
+  // ---------- Cambiar de pestaña (métrica) o volver a "en vivo" dentro de una tendencia abierta ----------
+  const palabrasMetrica = {
+    estado:     ["estado"],
+    potencia:   ["potencia"],
+    corriente:  ["corriente", "amperaje", "amperios"],
+    voltaje:    ["voltaje", "volts", "voltios"],
+    frecuencia: ["frecuencia", "hercios", "hertz"]
+  };
+  const nombreMetricaVoz = { estado: "el estado", potencia: "la potencia", corriente: "la corriente", voltaje: "el voltaje", frecuencia: "la frecuencia" };
+  const palabrasEnVivo = ["en vivo", "tiempo real", "modo en vivo", "ver en vivo", "volver a en vivo", "quitar historico", "salir del historico"];
+  normalizarLista(palabrasEnVivo);
+  Object.keys(palabrasMetrica).forEach(k => normalizarLista(palabrasMetrica[k]));
 
   // ---------- Límites por campo, en un solo lugar ----------
   // Los mismos límites que ya aplican normalizarFreqProceso(), normalizarFreq2Proceso(), etc.
@@ -3286,6 +3381,8 @@ document.addEventListener("DOMContentLoaded", () => {
   normalizarLista(objModoManual);
   normalizarLista(palabrasVariador1);
   normalizarLista(palabrasVariador2);
+  normalizarLista(verbosSeleccionarBomba);
+  normalizarLista(objAlternado);
   Object.keys(palabrasParametro).forEach(k => normalizarLista(palabrasParametro[k]));
 
   // ---------- Salir del modo voz ----------
@@ -3400,6 +3497,48 @@ document.addEventListener("DOMContentLoaded", () => {
         if (c.accion) c.accion(); else showScreen(c.screen);
         hablar(c.mensajeVoz || ("Vamos a " + c.nombre + "."));
         return;
+      }
+    }
+
+    // 3a2) Tendencia/histórico CON fecha hablada ("muéstrame la gráfica del 30 de agosto del 2026
+    // de la bomba de suministro", "cárgame el histórico de ayer", "el histórico de hoy") — se revisa
+    // ANTES que 3b para no perder la fecha cuando la frase también dice "tendencia"/"gráfica".
+    if (palabrasTendencia.some(p => contienePalabra(frase, p))) {
+      const fechaHablada = detectarFechaHablada(frase);
+      if (fechaHablada) {
+        const nObjetivo = detectarVariadorObjetivo(frase);
+        if (!nObjetivo) {
+          hablar("¿De qué variador, señor? Diga sumergible o suministro.");
+          return;
+        }
+        abrirTendencia(nObjetivo);
+        const inputFecha = document.getElementById("fechaHistorico" + nObjetivo);
+        if (inputFecha) inputFecha.value = fechaHablada;
+        cargarHistorico(nObjetivo);
+        const [anio, mes, dia] = fechaHablada.split("-");
+        hablar("Mostrando el histórico del " + dia + "/" + mes + "/" + anio +
+               " para el variador " + (nObjetivo === 1 ? "de la bomba sumergible" : "de suministro") + ".");
+        return;
+      }
+    }
+
+    // 3a3) Dentro de una pantalla de tendencia ya abierta: cambiar de pestaña (métrica) o volver
+    // a "en vivo" — "muéstrame la potencia", "cambia a corriente", "quiero ver el voltaje", "en vivo".
+    {
+      const nTendenciaActiva = tendenciaAbiertaActual();
+      if (nTendenciaActiva) {
+        if (palabrasEnVivo.some(p => contienePalabra(frase, p))) {
+          verEnVivo(nTendenciaActiva);
+          hablar("Mostrando en vivo.");
+          return;
+        }
+        for (const metricaId in palabrasMetrica) {
+          if (palabrasMetrica[metricaId].some(p => contienePalabra(frase, p))) {
+            cambiarMetricaTendencia(nTendenciaActiva, metricaId);
+            hablar("Mostrando " + nombreMetricaVoz[metricaId] + ".");
+            return;
+          }
+        }
       }
     }
 
