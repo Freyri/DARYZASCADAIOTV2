@@ -1132,7 +1132,7 @@ body.tema-oscuro #logoContainer img {
     <canvas id="chartTendenciaV2"></canvas>
   </div>
   <div id="tendenciaNota2" class="tendencia-nota">Esta gráfica muestra los últimos 30 minutos en vivo, mientras esta página esté abierta en el navegador.</div>
-  <div class="tendencia-alerta-nota">🔴 Los tramos en rojo indican corriente/potencia/voltaje fuera del límite configurado, o el variador en ALARMA. Toca el ⚙ para configurar los límites.</div>
+  <div class="tendencia-alerta-nota">🔴 Los tramos en rojo indican corriente fuera del límite configurado, o el variador en ALARMA. Toca el ⚙ para configurar los límites.</div>
 </div>
 
 <div id="parametrosScreen" class="screen">
@@ -2461,7 +2461,7 @@ async function cargarHistorico(n) {
         modoTendencia[n] = "historico";
         document.getElementById("btnVivo" + n).classList.remove("modo-activo");
         document.getElementById("tendenciaNota" + n).innerText =
-            "Mostrando histórico guardado en Google Sheets para el " + fecha + ".";
+            "Mostrando histórico guardado en Base de datos para el " + fecha + ".";
         dibujarGraficosTendencia(n);
     } catch (err) {
         console.error("Error cargando histórico:", err);
