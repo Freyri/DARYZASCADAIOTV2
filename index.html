@@ -878,7 +878,7 @@ body.tema-oscuro #logoContainer img {
       <img src="logo.jpg" alt="LOGO">
     </div>
   </div>
-  <div id="jarvisIndicador" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(15,98,254,0.92); color:white; padding:0.6vw 1.4vw; border-radius:2vw; font-size:1.1vw; font-weight:bold; z-index:9998; box-shadow:0 0 1vw rgba(0,0,0,0.35); text-align:center;">
+  <div id="jarvisIndicador" style="display:none; position:fixed; top:60px; left:50%; transform:translateX(-50%); background:rgba(15,98,254,0.92); color:white; padding:0.6vw 1.4vw; border-radius:2vw; font-size:1.1vw; font-weight:bold; z-index:9998; box-shadow:0 0 1vw rgba(0,0,0,0.35); text-align:center;">
     🎙️ Modo voz activo · escuchando…
   </div>
 </div>
@@ -1608,6 +1608,16 @@ function alternarTema() {
     localStorage.setItem("temaOscuro", activo ? "true" : "false");
     document.getElementById("temaToggleBtn").innerText = activo ? "☀️" : "🌙";
     aplicarImagenesSegunTema(activo);
+}
+
+// Fija el tema a un valor explícito (true=oscuro, false=claro), en vez de solo alternar.
+// Reutiliza alternarTema() para no duplicar su lógica (localStorage, ícono, imágenes) —
+// pensada para el control por voz ("cambia al tema oscuro"), donde no se puede "alternar
+// a ciegas" sin saber en qué tema ya está.
+function aplicarTemaExplicito(activo) {
+    const actual = document.body.classList.contains("tema-oscuro");
+    if (actual === activo) return; // ya está en ese tema, no hay nada que alternar
+    alternarTema();
 }
 
 aplicarTemaGuardado();
@@ -2918,9 +2928,30 @@ document.addEventListener("DOMContentLoaded", () => {
   recog.continuous = false;      // pedimos una frase a la vez, más estable para confirmaciones
   recog.interimResults = false;
 
+  // ---------- Botón discreto para salir del modo de voz ----------
+  // Aparece justo debajo del botón redondo de cambio de tema (mismo estilo, mismo tamaño),
+  // pero solo mientras el modo de voz está activo — así no estorba el resto del tiempo,
+  // y da una salida rápida por si el reconocimiento de "salir del modo de voz" falla o
+  // no hay micrófono disponible en ese momento.
+  const salirVozBtn = document.createElement("button");
+  salirVozBtn.id = "salirVozBtn";
+  salirVozBtn.title = "Salir del modo de voz";
+  salirVozBtn.innerText = "🎙️✕";
+  salirVozBtn.style.cssText =
+    "display:none; position:fixed; top:56px; left:14px; width:34px; height:34px;" +
+    "border-radius:50%; border:1px solid rgba(0,0,0,0.15); background:rgba(255,255,255,0.55);" +
+    "color:#555; font-size:0.85rem; cursor:pointer; z-index:100001; opacity:0.4;" +
+    "transition:opacity 0.2s ease, transform 0.15s ease; align-items:center; justify-content:center;";
+  salirVozBtn.addEventListener("mouseenter", () => { salirVozBtn.style.opacity = "1"; });
+  salirVozBtn.addEventListener("mouseleave", () => { salirVozBtn.style.opacity = "0.4"; });
+  salirVozBtn.addEventListener("click", () => {
+    if (modoVoz) { hablar("Saliendo del modo de voz.", desactivarModoVoz); }
+  });
+  document.body.appendChild(salirVozBtn);
+
   let modoVoz = false;
   let esperandoConfirmacion = false;
-  let comandoPendiente = null;     // { mensajeMqtt }
+  let comandoPendiente = null;     // { mensajeMqtt } para equipo, o { inputId, valor } para frecuencias/parámetros
   let timerInactividad = null;
   const MS_INACTIVIDAD = 5 * 60 * 1000; // 5 minutos
 
@@ -3048,6 +3079,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const objModoAuto = ["automatico","automático","auto"];
   const objModoManual = ["manual"];
 
+  // Identificadores de cada variador — compartidos entre el comando de frecuencia
+  // y la navegación por voz a sus pantallas de tendencia, para no duplicar la lista.
+  const palabrasVariador1 = ["sumergible","la sumergible","bomba sumergible","variador uno","variador 1","primer variador","el primer variador"];
+  const palabrasVariador2 = ["suministro","la suministro","bomba de suministro","bombas de suministro","variador dos","variador 2","segundo variador","el segundo variador"];
+
   // ---------- Coincidencia AND: el verbo y el objeto pueden estar en cualquier orden
   // y con relleno en medio ("prendeme LA bomba uno", "por favor apaga bomba dos", etc.)
   // Esto es más robusto que armar frases pegadas, porque el habla real casi siempre
@@ -3086,7 +3122,64 @@ document.addEventListener("DOMContentLoaded", () => {
       mensajeMqtt: "reintentar", confirmar: "¿Confirmo el reintento, señor?" }
   ];
 
+  // ---------- Otras acciones directas: tema y pantallas de tendencia ----------
+  // Mismo patrón robusto que el resto (AND de palabras, o palabra clave sola cuando
+  // no hay ambigüedad posible). Se ejecutan directo, sin confirmar, porque no accionan
+  // equipo físico — solo cambian lo que se ve en pantalla.
+  //
+  // 👉 Para agregar una acción nueva más adelante ("entra a alarmas", "abre configuración",
+  // etc.) solo hay que sumar un objeto más aquí: { test: frase => ..., accion: () => ...,
+  // mensajeVoz: "..." }. No hace falta tocar nada más del reconocimiento.
+  const palabrasTemaClaro  = ["tema claro","modo claro","tema blanco","modo blanco","modo dia","modo día"];
+  const palabrasTemaOscuro = ["tema oscuro","modo oscuro","tema negro","modo noche","modo nocturno"];
+  normalizarLista(palabrasTemaClaro);
+  normalizarLista(palabrasTemaOscuro);
+
+  const palabrasTendencia = ["tendencia","tendencias","grafico","graficos","gráfico","gráficos","grafica","graficas","gráfica","gráficas","historial","historico","histórico"];
+  normalizarLista(palabrasTendencia);
+
+  const comandosAccionDirecta = [
+    { test: frase => palabrasTemaClaro.some(p => contienePalabra(frase, p)),
+      accion: () => aplicarTemaExplicito(false), mensajeVoz: "Tema claro activado." },
+    { test: frase => palabrasTemaOscuro.some(p => contienePalabra(frase, p)),
+      accion: () => aplicarTemaExplicito(true), mensajeVoz: "Tema oscuro activado." },
+
+    { test: frase => coincideAND(frase, palabrasTendencia, palabrasVariador1),
+      accion: () => abrirTendencia(1), mensajeVoz: "Vamos a la tendencia de la bomba sumergible." },
+    { test: frase => coincideAND(frase, palabrasTendencia, palabrasVariador2),
+      accion: () => abrirTendencia(2), mensajeVoz: "Vamos a la tendencia de las bombas de suministro." }
+  ];
+
+  // ---------- Límites por campo, en un solo lugar ----------
+  // Los mismos límites que ya aplican normalizarFreqProceso(), normalizarFreq2Proceso(), etc.
+  // Los repetimos aquí (no podemos leerlos del código de esas funciones) para poder avisar
+  // por voz ANTES de ejecutar, en vez de recortar el valor en silencio como hacía antes.
+  const limitesInput = {
+    inputFreqProceso:     { min: 0,  max: 60 },
+    inputFreq2Proceso:    { min: 0,  max: 50 },
+    inputRetardoPresion:  { min: 0,  max: 60 },
+    inputPresionMinima:   { min: 0,  max: 145 },
+    inputReintentos:      { min: 1,  max: 10 },
+    inputLimiteCorriente: { min: 0,  max: null } // sin límite superior definido en el teclado
+  };
+  function validarRango(inputId, valor) {
+    const lim = limitesInput[inputId];
+    if (!lim) return null;
+    if (lim.max != null && valor > lim.max) return "El límite máximo es " + lim.max + ", señor.";
+    if (lim.min != null && valor < lim.min) return "El límite mínimo es " + lim.min + ", señor.";
+    return null;
+  }
+
   // ---------- Frecuencia por voz: "pon la sumergible a 45 hercios" / "suministro a 30 hz" ----------
+  // IMPORTANTE: en vez de armar el mensaje MQTT a mano y publicarlo directo (como estaba antes),
+  // esto ahora devuelve { inputId, valor } y la EJECUCIÓN (ejecutarComandoPendiente, más abajo)
+  // reutiliza la MISMA función normalizarFreqProceso()/normalizarFreq2Proceso() que ya usa el
+  // teclado numérico en pantalla (configTecladoNum, definido arriba en el bloque de parámetros).
+  // Esto arregla dos problemas de raíz:
+  //   1) Antes la voz dejaba pasar 0-60 para los DOS variadores, pero el de suministro
+  //      por teclado está limitado a 0-50 → con voz se podían mandar valores fuera de rango.
+  //   2) El campo en pantalla solo se actualizaba cuando el equipo respondía por telemetría;
+  //      ahora se actualiza al toque, igual que cuando lo tecleas.
   function detectarComandoFrecuencia(frase) {
     const tieneNumero = /\d+([.,]\d+)?/.test(frase);
     const palabrasFreq = ["hz","hercio","hercios","herz","hertz","hertzios","frecuencia","frecuencias","frecuensia","frecuensia","frecuncia","freq"];
@@ -3095,21 +3188,79 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const m = frase.match(/(\d+([.,]\d+)?)/);
     if (!m) return null;
-    const valor = Math.max(0, Math.min(60, parseFloat(m[1].replace(",", "."))));
+    const valor = parseFloat(m[1].replace(",", "."));
+    if (isNaN(valor)) return null;
 
-    const palabrasVariador1 = ["sumergible","la sumergible","bomba sumergible","variador uno","variador 1","primer variador","el primer variador"];
-    const palabrasVariador2 = ["suministro","bomba de suministro","variador dos","variador 2","segundo variador","el segundo variador"];
+    let inputId = null;
+    if (palabrasVariador1.some(p => contienePalabra(frase, p))) inputId = "inputFreqProceso";
+    else if (palabrasVariador2.some(p => contienePalabra(frase, p))) inputId = "inputFreq2Proceso";
+    if (!inputId) return null; // ambiguo: no adivinamos a qué variador, mejor no ejecutar nada
 
-    let variador = null;
-    if (palabrasVariador1.some(p => contienePalabra(frase, p))) variador = 1;
-    else if (palabrasVariador2.some(p => contienePalabra(frase, p))) variador = 2;
-    if (!variador) return null; // ambiguo: no adivinamos a qué variador, mejor no ejecutar nada
+    const errorRango = validarRango(inputId, valor);
+    if (errorRango) return { error: errorRango };
 
     return {
-      mensajeMqtt: (variador === 1 ? "variador1freq:" : "variador2freq:") + valor.toFixed(2),
-      confirmar: "¿Pongo el variador " + (variador === 1 ? "de la bomba sumergible" : "de suministro") +
+      inputId,
+      valor,
+      confirmar: "¿Pongo el variador " + (inputId === "inputFreqProceso" ? "de la bomba sumergible" : "de suministro") +
                  " a " + valor.toFixed(2) + " hercios, confirma señor?"
     };
+  }
+
+  // ---------- Parámetros generales por voz: "pon el retardo de presión en 5" /
+  // "reintentos en 3" / "presión mínima en 40" / "límite de corriente en 12.5" ----------
+  // Misma lógica robusta que la frecuencia: número + palabra clave del parámetro,
+  // en cualquier orden y con relleno en medio ("ponme el retardo de presión en 5 por favor").
+  // También reutiliza configTecladoNum, así que comparte límites, formato y publicación MQTT
+  // con el teclado en pantalla — un solo lugar de verdad para cada parámetro.
+  const palabrasParametro = {
+    inputRetardoPresion: ["retardo de presion","retardo de tolerancia","tolerancia de presion","retardo"],
+    inputPresionMinima:  ["presion minima","minima presion","presion de minima","presion baja"],
+    inputReintentos:     ["reintentos","cantidad de reintentos","numero de reintentos","numero de reintento"],
+    inputLimiteCorriente:["limite de corriente","corriente nominal","corriente maxima","limite de amperaje"]
+  };
+  function detectarComandoParametro(frase) {
+    const m = frase.match(/(\d+([.,]\d+)?)/);
+    if (!m) return null;
+    const valor = parseFloat(m[1].replace(",", "."));
+    if (isNaN(valor)) return null;
+
+    for (const inputId in palabrasParametro) {
+      if (palabrasParametro[inputId].some(p => contienePalabra(frase, p))) {
+        const cfg = configTecladoNum[inputId];
+        if (!cfg) continue;
+
+        const errorRango = validarRango(inputId, valor);
+        if (errorRango) return { error: errorRango };
+
+        return {
+          inputId,
+          valor,
+          confirmar: "¿Pongo " + cfg.titulo.toLowerCase() + " en " +
+                     valor.toFixed(cfg.decimales) + ", confirma señor?"
+        };
+      }
+    }
+    return null; // ninguna palabra clave de parámetro coincidió
+  }
+
+  // ---------- Ejecuta el comando ya confirmado ----------
+  function ejecutarComandoPendiente() {
+    const c = comandoPendiente;
+    if (!c) return;
+    if (c.inputId) {
+      // Mismo camino que el teclado numérico en pantalla: fija el valor en el input
+      // y llama a SU función normalizar(), que ya se encarga de límites, formato,
+      // actualizar el campo visualmente y publicar el MQTT correspondiente.
+      const cfg = configTecladoNum[c.inputId];
+      const el = document.getElementById(c.inputId);
+      if (cfg && el) {
+        el.value = c.valor;
+        cfg.normalizar();
+      }
+    } else if (c.mensajeMqtt) {
+      publicarMqtt(c.mensajeMqtt);
+    }
   }
 
   // ---------- IMPORTANTE: normalizamos TODAS las frases del diccionario (sin tildes,
@@ -3133,6 +3284,9 @@ document.addEventListener("DOMContentLoaded", () => {
   normalizarLista(objBomba2);
   normalizarLista(objModoAuto);
   normalizarLista(objModoManual);
+  normalizarLista(palabrasVariador1);
+  normalizarLista(palabrasVariador2);
+  Object.keys(palabrasParametro).forEach(k => normalizarLista(palabrasParametro[k]));
 
   // ---------- Salir del modo voz ----------
   const comandosSalir = [
@@ -3166,6 +3320,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function activarModoVoz() {
     modoVoz = true;
     indicador.style.display = "block";
+    salirVozBtn.style.display = "flex";
     hablar("Modo de voz activado. Le escucho, señor.", () => {
       try { recog.start(); } catch (e) {}
     });
@@ -3177,6 +3332,7 @@ document.addEventListener("DOMContentLoaded", () => {
     esperandoConfirmacion = false;
     comandoPendiente = null;
     indicador.style.display = "none";
+    salirVozBtn.style.display = "none";
     clearTimeout(timerInactividad);
     try { recog.stop(); } catch (e) {}
   }
@@ -3220,7 +3376,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 1) Si hay un comando esperando confirmación, esto SOLO puede ser sí/no
     if (esperandoConfirmacion) {
       if (esSi(frase)) {
-        publicarMqtt(comandoPendiente.mensajeMqtt);
+        ejecutarComandoPendiente();
         hablar("Confirmado, señor.");
       } else if (esNo(frase)) {
         hablar("Cancelado, señor.");
@@ -3241,8 +3397,19 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3) Navegación (directo, sin confirmar)
     for (const c of comandosNavegacion) {
       if (c.frases.some(f => contienePalabra(frase, f))) {
-        showScreen(c.screen);
-        hablar("Vamos a " + c.nombre + ".");
+        if (c.accion) c.accion(); else showScreen(c.screen);
+        hablar(c.mensajeVoz || ("Vamos a " + c.nombre + "."));
+        return;
+      }
+    }
+
+    // 3b) Otras acciones directas (tema, tendencias) — mismo patrón AND que comandosEquipo:
+    // palabra de ACCIÓN + palabra de OBJETO, en cualquier orden, sin necesidad de confirmar
+    // porque no accionan equipo físico.
+    for (const c of comandosAccionDirecta) {
+      if (c.test(frase)) {
+        c.accion();
+        hablar(c.mensajeVoz);
         return;
       }
     }
@@ -3250,9 +3417,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // 4) Frecuencia (con confirmación)
     const cmdFreq = detectarComandoFrecuencia(frase);
     if (cmdFreq) {
+      if (cmdFreq.error) { hablar(cmdFreq.error); return; }
       comandoPendiente = cmdFreq;
       esperandoConfirmacion = true;
       hablar(cmdFreq.confirmar);
+      return;
+    }
+
+    // 4b) Parámetros generales: retardo de presión, presión mínima, reintentos, límite de corriente
+    const cmdParam = detectarComandoParametro(frase);
+    if (cmdParam) {
+      if (cmdParam.error) { hablar(cmdParam.error); return; }
+      comandoPendiente = cmdParam;
+      esperandoConfirmacion = true;
+      hablar(cmdParam.confirmar);
       return;
     }
 
