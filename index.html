@@ -133,6 +133,18 @@ body {
   width: 80%;
   height: auto;
   object-fit: contain;
+  position: relative;
+  z-index: 50;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+#logoContainer img.logo-presionando {
+  opacity: 0.55;
+  transform: scale(0.97);
 }
 
 .rectangulo {
@@ -865,6 +877,9 @@ body.tema-oscuro #logoContainer img {
     <div id="logoContainer">
       <img src="logo.jpg" alt="LOGO">
     </div>
+  </div>
+  <div id="jarvisIndicador" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(15,98,254,0.92); color:white; padding:0.6vw 1.4vw; border-radius:2vw; font-size:1.1vw; font-weight:bold; z-index:9998; box-shadow:0 0 1vw rgba(0,0,0,0.35); text-align:center;">
+    🎙️ Modo voz activo · escuchando…
   </div>
 </div>
 
@@ -2885,6 +2900,240 @@ document.addEventListener("DOMContentLoaded", () => {
         if (input) input.value = hoyStr;
     });
 });
+</script>
+
+<!-- ========================================================
+     🎙️ MODO VOZ (JARVIS) — activar: mantener presionado el logo
+     de la pantalla principal por 3 segundos.
+     ======================================================== -->
+<script>
+(function () {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const logo = document.querySelector("#logoContainer img");
+  const indicador = document.getElementById("jarvisIndicador");
+  if (!SpeechRecognition || !logo) return; // navegador sin soporte, o pantalla no cargada aún
+
+  const recog = new SpeechRecognition();
+  recog.lang = "es-ES";
+  recog.continuous = false;      // pedimos una frase a la vez, más estable para confirmaciones
+  recog.interimResults = false;
+
+  let modoVoz = false;
+  let esperandoConfirmacion = false;
+  let comandoPendiente = null;     // { mensajeMqtt }
+  let timerInactividad = null;
+  const MS_INACTIVIDAD = 5 * 60 * 1000; // 5 minutos
+
+  // ---------- Voz de respuesta (TTS del navegador — nota: no es la voz real de Jarvis,
+  // eso requeriría un servicio de voz pagado; esta es la voz del sistema, gratis y offline) ----------
+  function hablar(texto, callback) {
+    try {
+      const u = new SpeechSynthesisUtterance(texto);
+      u.lang = "es-ES";
+      u.rate = 1.0;
+      u.onend = () => { if (callback) callback(); };
+      speechSynthesis.cancel();
+      speechSynthesis.speak(u);
+    } catch (e) {
+      if (callback) callback();
+    }
+  }
+
+  function normalizar(s) {
+    return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  }
+
+  // ---------- Sí / No robusto (muchas variantes, como pediste) ----------
+  const variantesSi = ["si","sí","sy","s","sisi","si si","afirmativo","dale","ok","okay","correcto","confirmo","claro","por supuesto","va","hazlo","adelante"];
+  const variantesNo = ["no","nop","negativo","cancela","cancelar","no no","para","detente","no gracias"];
+  function esSi(frase) { return variantesSi.some(v => frase === v || frase.includes(v)); }
+  function esNo(frase) { return variantesNo.some(v => frase === v || frase.includes(v)); }
+
+  // ---------- Comandos de NAVEGACIÓN (sin riesgo físico → se ejecutan directo, sin confirmar) ----------
+  const comandosNavegacion = [
+    { frases: ["pantalla principal","ir a principal","ve a principal","vamos a principal","muestra principal"], screen: "mainScreen", nombre: "Principal" },
+    { frases: ["pantalla de proceso","ir a proceso","ve a proceso","vamos a proceso","muestra proceso","abre proceso"], screen: "procesoScreen", nombre: "Proceso" },
+    { frases: ["pantalla de monitoreo","ir a monitoreo","ve a monitoreo","vamos a monitoreo","muestra monitoreo","abre monitoreo"], screen: "monitoreoScreen", nombre: "Monitoreo" },
+    { frases: ["pantalla de parametros","ir a parametros","ve a parametros","vamos a parametros","muestra parametros","abre parametros"], screen: "parametrosScreen", nombre: "Parámetros" },
+    { frases: ["pantalla de diagnostico","ir a diagnostico","ve a diagnostico","vamos a diagnostico","muestra diagnostico","abre diagnostico"], screen: "diagnosticoScreen", nombre: "Diagnóstico" },
+    { frases: ["pantalla de alarmas","ir a alarmas","ve a alarmas","vamos a alarmas","muestra alarmas","abre alarmas"], screen: "alarmasScreen", nombre: "Alarmas" }
+  ];
+
+  // ---------- Comandos de EQUIPO (afectan bombas reales → SIEMPRE piden confirmación) ----------
+  // mensajeMqtt es exactamente lo que ya usan tus botones .boton-mqtt (data-msg), no invento nada nuevo.
+  const comandosEquipo = [
+    { frases: ["modo automatico","pasa a modo automatico","cambia a modo automatico","poner modo automatico"], mensajeMqtt: "automatico", confirmar: "¿Paso a modo automático, confirma señor?" },
+    { frases: ["modo manual","pasa a modo manual","cambia a modo manual","poner modo manual"], mensajeMqtt: "manual", confirmar: "¿Paso a modo manual, confirma señor?" },
+    { frases: ["prende bomba sumergible","enciende bomba sumergible","arranca bomba sumergible","activa bomba sumergible"], mensajeMqtt: "startbomba1", confirmar: "¿Enciendo la bomba sumergible, confirma señor?" },
+    { frases: ["apaga bomba sumergible","detiene bomba sumergible","para bomba sumergible","desactiva bomba sumergible"], mensajeMqtt: "stopbomba1", confirmar: "¿Apago la bomba sumergible, confirma señor?" },
+    { frases: ["prende bomba de suministro uno","enciende bomba de suministro uno","arranca bomba uno de suministro","prende bomba uno"], mensajeMqtt: "startbomba2", confirmar: "¿Enciendo la bomba uno de suministro, confirma señor?" },
+    { frases: ["apaga bomba de suministro uno","detiene bomba de suministro uno","para bomba uno de suministro","apaga bomba uno"], mensajeMqtt: "stopbomba2", confirmar: "¿Apago la bomba uno de suministro, confirma señor?" },
+    { frases: ["prende bomba de suministro dos","enciende bomba de suministro dos","arranca bomba dos de suministro","prende bomba dos"], mensajeMqtt: "startbomba3", confirmar: "¿Enciendo la bomba dos de suministro, confirma señor?" },
+    { frases: ["apaga bomba de suministro dos","detiene bomba de suministro dos","para bomba dos de suministro","apaga bomba dos"], mensajeMqtt: "stopbomba3", confirmar: "¿Apago la bomba dos de suministro, confirma señor?" },
+    { frases: ["reintentar","reintenta","hacer reintento"], mensajeMqtt: "reintentar", confirmar: "¿Confirmo el reintento, señor?" }
+  ];
+
+  // ---------- Frecuencia por voz: "pon la sumergible a 45 hercios" / "suministro a 30 hz" ----------
+  function detectarComandoFrecuencia(frase) {
+    const tieneNumero = /\d+([.,]\d+)?/.test(frase);
+    const mencionaFreq = frase.includes("hz") || frase.includes("hercio") || frase.includes("herz") || frase.includes("frecuencia");
+    if (!tieneNumero || !mencionaFreq) return null;
+
+    const m = frase.match(/(\d+([.,]\d+)?)/);
+    if (!m) return null;
+    const valor = Math.max(0, Math.min(60, parseFloat(m[1].replace(",", "."))));
+
+    let variador = null;
+    if (frase.includes("sumergible") || frase.includes("variador uno") || frase.includes("variador 1")) variador = 1;
+    else if (frase.includes("suministro") || frase.includes("variador dos") || frase.includes("variador 2")) variador = 2;
+    if (!variador) return null; // ambiguo: no adivinamos a qué variador, mejor no ejecutar nada
+
+    return {
+      mensajeMqtt: (variador === 1 ? "variador1freq:" : "variador2freq:") + valor.toFixed(2),
+      confirmar: "¿Pongo el variador " + (variador === 1 ? "de la bomba sumergible" : "de suministro") +
+                 " a " + valor.toFixed(2) + " hercios, confirma señor?"
+    };
+  }
+
+  // ---------- Salir del modo voz ----------
+  const comandosSalir = ["salir del modo de reconocimiento de voz","salir del modo voz","desactiva jarvis","apaga jarvis","detente jarvis","salir modo voz"];
+
+  function publicarMqtt(msg) {
+    if (client && client.connected) {
+      client.publish(topicControl, msg);
+      console.log("📤 [Voz] Enviado MQTT:", msg);
+    } else {
+      hablar("No hay conexión con el sistema, no se pudo enviar el comando.");
+    }
+  }
+
+  function resetInactividad() {
+    clearTimeout(timerInactividad);
+    timerInactividad = setTimeout(() => {
+      hablar("Modo de voz desactivado por inactividad.");
+      desactivarModoVoz();
+    }, MS_INACTIVIDAD);
+  }
+
+  function activarModoVoz() {
+    modoVoz = true;
+    indicador.style.display = "block";
+    hablar("Modo de voz activado. Le escucho, señor.", () => {
+      try { recog.start(); } catch (e) {}
+    });
+    resetInactividad();
+  }
+
+  function desactivarModoVoz() {
+    modoVoz = false;
+    esperandoConfirmacion = false;
+    comandoPendiente = null;
+    indicador.style.display = "none";
+    clearTimeout(timerInactividad);
+    try { recog.stop(); } catch (e) {}
+  }
+
+  // ---------- Toque largo (3s) sobre el logo para activar/desactivar ----------
+  // Se escucha por pointer Y por touch/mouse por separado, porque algunos WebViews
+  // (apps empaquetadas, navegadores viejos) no disparan bien los eventos "pointer".
+  let pressTimer = null;
+  function iniciarPress() {
+    if (pressTimer) return; // evita doble disparo si el navegador manda pointer Y touch/mouse a la vez
+    logo.classList.add("logo-presionando");
+    pressTimer = setTimeout(() => {
+      logo.classList.remove("logo-presionando");
+      pressTimer = null;
+      if (modoVoz) desactivarModoVoz(); else activarModoVoz();
+    }, 3000);
+  }
+  function cancelarPress() {
+    logo.classList.remove("logo-presionando");
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
+  logo.addEventListener("pointerdown", iniciarPress);
+  logo.addEventListener("pointerup", cancelarPress);
+  logo.addEventListener("pointerleave", cancelarPress);
+  logo.addEventListener("pointercancel", cancelarPress);
+  logo.addEventListener("touchstart", (e) => { e.preventDefault(); iniciarPress(); }, { passive: false });
+  logo.addEventListener("touchend", cancelarPress);
+  logo.addEventListener("touchcancel", cancelarPress);
+  logo.addEventListener("mousedown", iniciarPress);
+  logo.addEventListener("mouseup", cancelarPress);
+  logo.addEventListener("mouseleave", cancelarPress);
+  logo.addEventListener("contextmenu", (e) => e.preventDefault()); // evita menú "guardar imagen" al mantener presionado
+
+  // ---------- Procesar cada frase reconocida ----------
+  recog.onresult = (event) => {
+    const frase = normalizar(event.results[event.results.length - 1][0].transcript);
+    console.log("🗣️ [Voz]", frase);
+    resetInactividad();
+
+    // 1) Si hay un comando esperando confirmación, esto SOLO puede ser sí/no
+    if (esperandoConfirmacion) {
+      if (esSi(frase)) {
+        publicarMqtt(comandoPendiente.mensajeMqtt);
+        hablar("Confirmado, señor.");
+      } else if (esNo(frase)) {
+        hablar("Cancelado, señor.");
+      } else {
+        hablar("No entendí, digamos que fue un no. Cancelado por seguridad.");
+      }
+      esperandoConfirmacion = false;
+      comandoPendiente = null;
+      return;
+    }
+
+    // 2) Salir del modo voz
+    if (comandosSalir.some(c => frase.includes(c))) {
+      hablar("Saliendo del modo de voz.", desactivarModoVoz);
+      return;
+    }
+
+    // 3) Navegación (directo, sin confirmar)
+    for (const c of comandosNavegacion) {
+      if (c.frases.some(f => frase.includes(f))) {
+        showScreen(c.screen);
+        hablar("Vamos a " + c.nombre + ".");
+        return;
+      }
+    }
+
+    // 4) Frecuencia (con confirmación)
+    const cmdFreq = detectarComandoFrecuencia(frase);
+    if (cmdFreq) {
+      comandoPendiente = cmdFreq;
+      esperandoConfirmacion = true;
+      hablar(cmdFreq.confirmar);
+      return;
+    }
+
+    // 5) Comandos de equipo (con confirmación SIEMPRE)
+    for (const c of comandosEquipo) {
+      if (c.frases.some(f => frase.includes(f))) {
+        comandoPendiente = { mensajeMqtt: c.mensajeMqtt };
+        esperandoConfirmacion = true;
+        hablar(c.confirmar);
+        return;
+      }
+    }
+
+    // 6) Nada reconocido
+    hablar("No reconocí ese comando, señor.");
+  };
+
+  // El reconocimiento se detiene solo tras cada frase (continuous=false); si el modo voz
+  // sigue activo y no estamos hablando, lo reiniciamos para seguir escuchando.
+  recog.onend = () => {
+    if (modoVoz && !speechSynthesis.speaking) {
+      setTimeout(() => { try { recog.start(); } catch (e) {} }, 300);
+    }
+  };
+  recog.onerror = (e) => {
+    console.warn("⚠️ [Voz] Error de reconocimiento:", e.error);
+    if (modoVoz) setTimeout(() => { try { recog.start(); } catch (err) {} }, 800);
+  };
+})();
 </script>
 </body>
 </html>
