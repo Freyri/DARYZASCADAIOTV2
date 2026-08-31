@@ -462,6 +462,14 @@ body.tema-oscuro #fullscreenBtn {
   font-weight: bold;
   margin-left: 3vw;
 }
+
+/* En celular, el botón de tema (#temaToggleBtn) es "fixed" arriba a la izquierda
+   y queda encima de "← Regresar". Le damos espacio a Regresar para que no se solapen. */
+@media (max-width: 768px) {
+  .tendencia-volver {
+    margin-left: 46px;
+  }
+}
 .tendencia-controles {
   display: flex;
   align-items: center;
@@ -1099,7 +1107,7 @@ body.tema-oscuro #logoContainer img {
     <canvas id="chartTendenciaV1"></canvas>
   </div>
   <div id="tendenciaNota1" class="tendencia-nota">Esta gráfica muestra los últimos 30 minutos en vivo, mientras esta página esté abierta en el navegador.</div>
-  <div class="tendencia-alerta-nota">🔴 Los tramos en rojo indican corriente/potencia/voltaje fuera del límite configurado, o el variador en ALARMA. Toca el ⚙ para configurar los límites.</div>
+  <div class="tendencia-alerta-nota">🔴 Los tramos en rojo indican corriente fuera del límite configurado, o el variador en ALARMA. Toca el ⚙ para configurar los límites.</div>
 </div>
 
 <!-- ========== PANTALLA DE TENDENCIA · VARIADOR 2 (disimulada, sin los 6 botones) ========== -->
@@ -2454,14 +2462,14 @@ async function cargarHistorico(n) {
         } else {
             datosHistoricos[n] = filas.map(convertirFilaSheets).sort((a, b) => a.t - b.t);
             datosHistoricosCrudos[n] = filas;
-            mensaje.innerText = filas.length + " registros del " + fecha + ".";
+            mensaje.innerText = ""; // Hay datos y todo salió bien: no se muestra mensaje (evita achicar la gráfica).
             if (btnDescargar) btnDescargar.disabled = false;
         }
 
         modoTendencia[n] = "historico";
         document.getElementById("btnVivo" + n).classList.remove("modo-activo");
         document.getElementById("tendenciaNota" + n).innerText =
-            "Mostrando histórico guardado en Base de datos para el " + fecha + ".";
+            "Mostrando histórico guardado en Base de Datos para el " + fecha + ".";
         dibujarGraficosTendencia(n);
     } catch (err) {
         console.error("Error cargando histórico:", err);
