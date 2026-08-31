@@ -26,6 +26,16 @@
   display: block;
 }
 
+/* Botón de modo de voz (🎙️): el brillo pulsante ES el indicador de "escuchando",
+   ya no hay un texto aparte para eso. */
+@keyframes jarvisEscuchando {
+  0%, 100% { box-shadow: 0 0 8px rgba(15,98,254,0.55); }
+  50%      { box-shadow: 0 0 20px rgba(0,194,255,0.95); }
+}
+#salirVozBtn {
+  animation: jarvisEscuchando 1.6s ease-in-out infinite;
+}
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -880,16 +890,6 @@ body.tema-oscuro #logoContainer img {
   </div>
 </div>
 
-<!-- Indicador de modo de voz: FUERA de cualquier pantalla individual (antes estaba dentro de
-     #mainScreen, así que al navegar a otra pantalla el navegador dejaba de pintarlo aunque
-     fuera position:fixed, porque su contenedor padre tenía display:none). Al ponerlo aquí,
-     como hermano directo de las pantallas, se ve sin importar en cuál estés.
-     top pequeño pero NO pegado al borde: queda justo arriba de los títulos/botones de cada
-     pantalla (que empiezan alrededor del 3% superior) en vez de taparlos. -->
-<div id="jarvisIndicador" style="display:none; position:fixed; top:6px; left:50%; transform:translateX(-50%); background:rgba(15,98,254,0.92); color:white; padding:0.35vw 1.2vw; border-radius:2vw; font-size:clamp(11px, 1vw, 15px); font-weight:bold; z-index:100000; box-shadow:0 0 1vw rgba(0,0,0,0.35); text-align:center; pointer-events:none;">
-  🎙️ Modo voz activo · escuchando…
-</div>
-
 <!-- ========== OTRAS PANTALLAS ========== -->
 
 <div id="procesoScreen" class="screen">
@@ -1690,6 +1690,10 @@ const rectV2Y1El = document.getElementById("rectV2Y1");
 let blinkOn = true;
 let h304Global = 0;
 let h305Global = 0;
+// Modo de trabajo actual (según telemetría H306 = automático, H311 = manual), para que
+// el comando de voz "selecciona bomba 1/2" sepa si está permitido o no en este momento.
+let modoAutomaticoActivo = false;
+let modoManualActivo = false;
 let alarmaPresionActiva = false;
 let h400Global = null; // código de falla más reciente del Variador 1
 let h500Global = null; // código de falla más reciente del Variador 2
@@ -2007,6 +2011,8 @@ client.on("message", (topic, message) => {
             setRectColor("rect8", h305);
             setRectColor("rect9", h306);
             setRectColor("rect10", h311);
+            modoAutomaticoActivo = (h306 == 1);
+            modoManualActivo = (h311 == 1);
             setRectColor("rect11", h313);
 
             // Flujo Tanque1<->Tanque2 (vasos comunicantes): se oculta solo si AMBOS tanques están vacíos
@@ -2937,7 +2943,6 @@ document.addEventListener("DOMContentLoaded", () => {
 (function () {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const logo = document.querySelector("#logoContainer img");
-  const indicador = document.getElementById("jarvisIndicador");
   if (!SpeechRecognition || !logo) return; // navegador sin soporte, o pantalla no cargada aún
 
   const recog = new SpeechRecognition();
@@ -2952,15 +2957,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // no hay micrófono disponible en ese momento.
   const salirVozBtn = document.createElement("button");
   salirVozBtn.id = "salirVozBtn";
-  salirVozBtn.title = "Salir del modo de voz";
-  salirVozBtn.innerText = "🎙️✕";
+  salirVozBtn.title = "Modo de voz activo · toca para salir";
+  salirVozBtn.innerText = "🎙️";
   salirVozBtn.style.cssText =
-    "display:none; position:fixed; top:56px; left:14px; width:34px; height:34px;" +
-    "border-radius:50%; border:1px solid rgba(0,0,0,0.15); background:rgba(255,255,255,0.55);" +
-    "color:#555; font-size:0.85rem; cursor:pointer; z-index:100001; opacity:0.4;" +
-    "transition:opacity 0.2s ease, transform 0.15s ease; align-items:center; justify-content:center;";
-  salirVozBtn.addEventListener("mouseenter", () => { salirVozBtn.style.opacity = "1"; });
-  salirVozBtn.addEventListener("mouseleave", () => { salirVozBtn.style.opacity = "0.4"; });
+    "display:none; position:fixed; top:56px; left:14px; width:40px; height:40px;" +
+    "border-radius:50%; border:2px solid rgba(255,255,255,0.65);" +
+    "background:linear-gradient(135deg,#0f62fe,#00c2ff); color:#fff;" +
+    "font-size:1.15rem; cursor:pointer; z-index:100001; opacity:0.97;" +
+    "transition:transform 0.15s ease; align-items:center; justify-content:center;" +
+    "box-shadow:0 0 10px rgba(15,98,254,0.7);";
+  salirVozBtn.addEventListener("mouseenter", () => { salirVozBtn.style.transform = "scale(1.08)"; });
+  salirVozBtn.addEventListener("mouseleave", () => { salirVozBtn.style.transform = "scale(1)"; });
   salirVozBtn.addEventListener("click", () => {
     if (modoVoz) { hablar("Saliendo del modo de voz.", desactivarModoVoz); }
   });
@@ -2972,13 +2979,40 @@ document.addEventListener("DOMContentLoaded", () => {
   let timerInactividad = null;
   const MS_INACTIVIDAD = 5 * 60 * 1000; // 5 minutos
 
+  // ---------- Elegir una voz masculina en español, si el navegador tiene alguna disponible ----------
+  // El navegador no siempre trae la misma lista de voces (depende del sistema operativo), así
+  // que probamos varios nombres típicos de voces masculinas en español y nos quedamos con la
+  // primera que exista. Si no hay ninguna reconocida, igual bajamos un poco el tono (pitch)
+  // para que suene más grave, así sea con la voz femenina por defecto.
+  let vozPreferida = null;
+  function elegirVozPreferida() {
+    try {
+      const voces = speechSynthesis.getVoices();
+      if (!voces || voces.length === 0) return null;
+      const nombresMasculinos = ["jorge","diego","juan","pablo","alvaro","álvaro","carlos","enrique","miguel","fernando","raul","raúl","andres","andrés"];
+      const esVoces = voces.filter(v => (v.lang || "").toLowerCase().startsWith("es"));
+      for (const nombre of nombresMasculinos) {
+        const encontrada = esVoces.find(v => v.name.toLowerCase().includes(nombre));
+        if (encontrada) return encontrada;
+      }
+      return esVoces[0] || voces[0]; // sin coincidencia: al menos alguna voz en español
+    } catch (e) {
+      return null;
+    }
+  }
+  vozPreferida = elegirVozPreferida(); // por si las voces ya estaban cargadas
+  speechSynthesis.onvoiceschanged = () => { vozPreferida = elegirVozPreferida(); };
+
   // ---------- Voz de respuesta (TTS del navegador — nota: no es la voz real de Jarvis,
-  // eso requeriría un servicio de voz pagado; esta es la voz del sistema, gratis y offline) ----------
+  // eso requeriría un servicio de voz pagado; esta es la voz del sistema, gratis y offline,
+  // pero elegimos la más masculina disponible y bajamos el tono para acercarla a ese estilo) ----------
   function hablar(texto, callback) {
     try {
       const u = new SpeechSynthesisUtterance(texto);
       u.lang = "es-ES";
-      u.rate = 1.0;
+      u.rate = 0.98;
+      u.pitch = 0.8; // más grave = más varonil
+      if (vozPreferida) u.voice = vozPreferida;
       u.onend = () => {
         if (callback) callback();
         // 🔧 FIX: recog.onend se dispara casi al instante (continuous=false),
@@ -3108,6 +3142,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const verbosSeleccionarBomba = [
     "selecciona","seleccione","selecciona a","seleccionar","elige","elije","escoge","escoja","escoger",
     "pon en servicio","poner en servicio","usa","usa la","usar la",
+    "cambia","cambialo","cámbialo","cambiala","cámbiala","cambiar",
     "cambia a la","cambiate a la","cámbiate a la","pasate a la","pásate a la"
   ];
   // Para "activa/desactiva el modo de bombas alternadas" SÍ reutilizamos verbosEncender/verbosApagar
@@ -3145,9 +3180,9 @@ document.addEventListener("DOMContentLoaded", () => {
       mensajeMqtt: "stopbomba3", confirmar: "¿Apago la bomba dos de suministro, confirma señor?" },
 
     { test: frase => coincideAND(frase, verbosSeleccionarBomba, objBomba1),
-      mensajeMqtt: "selectbomba1", confirmar: "¿Selecciono la bomba uno de suministro, confirma señor?" },
+      mensajeMqtt: "selectbomba1", requiereManual: true, confirmar: "¿Selecciono la bomba uno de suministro, confirma señor?" },
     { test: frase => coincideAND(frase, verbosSeleccionarBomba, objBomba2),
-      mensajeMqtt: "selectbomba2", confirmar: "¿Selecciono la bomba dos de suministro, confirma señor?" },
+      mensajeMqtt: "selectbomba2", requiereManual: true, confirmar: "¿Selecciono la bomba dos de suministro, confirma señor?" },
 
     { test: frase => coincideAND(frase, verbosEncender, objAlternado),
       mensajeMqtt: "selectalternado", confirmar: "¿Activo el modo de bombas alternadas, confirma señor?" },
@@ -3416,7 +3451,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function activarModoVoz() {
     modoVoz = true;
-    indicador.style.display = "block";
     salirVozBtn.style.display = "flex";
     hablar("Modo de voz activado. Le escucho, señor.", () => {
       try { recog.start(); } catch (e) {}
@@ -3428,7 +3462,6 @@ document.addEventListener("DOMContentLoaded", () => {
     modoVoz = false;
     esperandoConfirmacion = false;
     comandoPendiente = null;
-    indicador.style.display = "none";
     salirVozBtn.style.display = "none";
     clearTimeout(timerInactividad);
     try { recog.stop(); } catch (e) {}
@@ -3576,6 +3609,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // 5) Comandos de equipo (con confirmación SIEMPRE)
     for (const c of comandosEquipo) {
       if (c.test(frase)) {
+        // La selección de bomba 1/2 solo tiene sentido en modo MANUAL: en automático
+        // es el propio sistema el que decide/alterna, así que avisamos en vez de ejecutar.
+        if (c.requiereManual && !modoManualActivo) {
+          hablar("Pase primero al modo manual, señor.");
+          return;
+        }
         comandoPendiente = { mensajeMqtt: c.mensajeMqtt };
         esperandoConfirmacion = true;
         hablar(c.confirmar);
