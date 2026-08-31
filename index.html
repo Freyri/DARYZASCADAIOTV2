@@ -3280,6 +3280,18 @@ document.addEventListener("DOMContentLoaded", () => {
   normalizarLista(palabrasEnVivo);
   Object.keys(palabrasMetrica).forEach(k => normalizarLista(palabrasMetrica[k]));
 
+  // ---------- "Regresar" dentro de una tendencia abierta → mismo botón que "← Regresar" (vuelve a Monitoreo) ----------
+  const palabrasRegresar = ["regresar", "regresa", "regresame", "regrésame", "volver", "vuelve", "atras", "atrás", "ve atras", "ve atrás", "salir de la grafica", "salir de la gráfica"];
+  normalizarLista(palabrasRegresar);
+
+  // ---------- "Descarga excel" / "descargar reporte" dentro de una tendencia abierta ----------
+  // Solo tiene sentido si ya hay un histórico cargado (el mismo botón en pantalla está
+  // deshabilitado hasta entonces); si no, avisamos que primero hay que elegir la fecha.
+  const verbosDescargar = ["descarga", "descargar", "baja", "bajar", "exporta", "exportar", "genera", "generar"];
+  const objDescargar = ["excel", "reporte", "el reporte", "los datos", "el archivo excel", "el excel", "el archivo"];
+  normalizarLista(verbosDescargar);
+  normalizarLista(objDescargar);
+
   // ---------- Límites por campo, en un solo lugar ----------
   // Los mismos límites que ya aplican normalizarFreqProceso(), normalizarFreq2Proceso(), etc.
   // Los repetimos aquí (no podemos leerlos del código de esas funciones) para poder avisar
@@ -3449,9 +3461,30 @@ document.addEventListener("DOMContentLoaded", () => {
     }, MS_INACTIVIDAD);
   }
 
+  // ---------- El icono del micrófono solo se muestra en la pantalla PRINCIPAL ----------
+  // (con el modo de voz igual sigue activo en el resto de pantallas, solo se oculta el icono).
+  function actualizarVisibilidadBotonVoz() {
+    if (!modoVoz) { salirVozBtn.style.display = "none"; return; }
+    const main = document.getElementById("mainScreen");
+    const enPrincipal = main && getComputedStyle(main).display !== "none";
+    salirVozBtn.style.display = enPrincipal ? "flex" : "none";
+  }
+
+  // showScreen() es la única función (ya sea por botón, por abrirTendencia/regresarDesdeTendencia,
+  // o por un comando de voz de navegación) que cambia de pantalla — la envolvemos para que el
+  // icono del micrófono se actualice automáticamente sin tocar el resto del código.
+  if (typeof window.showScreen === "function" && !window.__showScreenEnvueltoParaVoz) {
+    const showScreenOriginal = window.showScreen;
+    window.showScreen = function (screenId) {
+      showScreenOriginal(screenId);
+      actualizarVisibilidadBotonVoz();
+    };
+    window.__showScreenEnvueltoParaVoz = true;
+  }
+
   function activarModoVoz() {
     modoVoz = true;
-    salirVozBtn.style.display = "flex";
+    actualizarVisibilidadBotonVoz();
     hablar("Modo de voz activado. Le escucho, señor.", () => {
       try { recog.start(); } catch (e) {}
     });
@@ -3555,11 +3588,26 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // 3a3) Dentro de una pantalla de tendencia ya abierta: cambiar de pestaña (métrica) o volver
-    // a "en vivo" — "muéstrame la potencia", "cambia a corriente", "quiero ver el voltaje", "en vivo".
+    // 3a3) Dentro de una pantalla de tendencia ya abierta: regresar a monitoreo, descargar el
+    // Excel, cambiar de pestaña (métrica) o volver a "en vivo".
     {
       const nTendenciaActiva = tendenciaAbiertaActual();
       if (nTendenciaActiva) {
+        if (palabrasRegresar.some(p => contienePalabra(frase, p))) {
+          regresarDesdeTendencia();
+          hablar("Regresando a monitoreo.");
+          return;
+        }
+        if (coincideAND(frase, verbosDescargar, objDescargar)) {
+          const btnDescargar = document.getElementById("btnDescargarExcel" + nTendenciaActiva);
+          if (!btnDescargar || btnDescargar.disabled) {
+            hablar("Seleccione la fecha del histórico de datos primero, señor.");
+          } else {
+            descargarExcelHistorico(nTendenciaActiva);
+            hablar("Descargando el reporte en Excel.");
+          }
+          return;
+        }
         if (palabrasEnVivo.some(p => contienePalabra(frase, p))) {
           verEnVivo(nTendenciaActiva);
           hablar("Mostrando en vivo.");
