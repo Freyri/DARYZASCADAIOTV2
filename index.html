@@ -1488,7 +1488,6 @@ body.tema-oscuro #logoContainer img {
 </div>
 
 
-
 <script>
 // Hash SHA-256 de "usuario:clave" — la clave real NO está escrita en el código.
 const HASH_CREDENCIALES = "1ed6edeeca7103ff8a61d5d9d75a99cfb85d44f18cd4082653c4c81bebf94fd4";
@@ -2979,6 +2978,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let timerInactividad = null;
   const MS_INACTIVIDAD = 5 * 60 * 1000; // 5 minutos
 
+  // ---------- NUEVO: estado para el reset de alarma por voz (pide la clave hablada) ----------
+  let esperandoClaveReset = false;
+  let variadorResetObjetivo = null;   // 1 o 2
+  let comandoResetPendiente = null;   // "resetfallavar1" | "resetfallavar2"
+
   // ---------- Elegir una voz masculina en español, si el navegador tiene alguna disponible ----------
   // El navegador no siempre trae la misma lista de voces (depende del sistema operativo), así
   // que probamos varios nombres típicos de voces masculinas en español y nos quedamos con la
@@ -3158,6 +3162,9 @@ document.addEventListener("DOMContentLoaded", () => {
     return verbos.some(v => contienePalabra(frase, v)) && objetos.some(o => contienePalabra(frase, o));
   }
 
+  // ---------- NUEVO: nombre hablado de cada bomba de suministro (para las preguntas de confirmación) ----------
+  const nombreBombaSuministro = { 1: "uno", 2: "dos" };
+
   const comandosEquipo = [
     { test: frase => coincideAND(frase, verbosCambiarModo, objModoAuto),
       mensajeMqtt: "automatico", confirmar: "¿Paso a modo automático, confirma señor?" },
@@ -3169,15 +3176,17 @@ document.addEventListener("DOMContentLoaded", () => {
     { test: frase => coincideAND(frase, verbosApagar, objBombaSumergible),
       mensajeMqtt: "stopbomba1", confirmar: "¿Apago la bomba sumergible, confirma señor?" },
 
+    // bombaObjetivo: 1/2 -> antes de arrancar o parar estas bombas de suministro en modo MANUAL,
+    // se revisa si esa bomba ya está seleccionada (ver el bloque de ejecución más abajo).
     { test: frase => coincideAND(frase, verbosEncender, objBomba1),
-      mensajeMqtt: "startbomba2", confirmar: "¿Enciendo la bomba uno de suministro, confirma señor?" },
+      mensajeMqtt: "startbomba2", bombaObjetivo: 1, confirmar: "¿Enciendo la bomba uno de suministro, confirma señor?" },
     { test: frase => coincideAND(frase, verbosApagar, objBomba1),
-      mensajeMqtt: "stopbomba2", confirmar: "¿Apago la bomba uno de suministro, confirma señor?" },
+      mensajeMqtt: "stopbomba2", bombaObjetivo: 1, confirmar: "¿Apago la bomba uno de suministro, confirma señor?" },
 
     { test: frase => coincideAND(frase, verbosEncender, objBomba2),
-      mensajeMqtt: "startbomba3", confirmar: "¿Enciendo la bomba dos de suministro, confirma señor?" },
+      mensajeMqtt: "startbomba3", bombaObjetivo: 2, confirmar: "¿Enciendo la bomba dos de suministro, confirma señor?" },
     { test: frase => coincideAND(frase, verbosApagar, objBomba2),
-      mensajeMqtt: "stopbomba3", confirmar: "¿Apago la bomba dos de suministro, confirma señor?" },
+      mensajeMqtt: "stopbomba3", bombaObjetivo: 2, confirmar: "¿Apago la bomba dos de suministro, confirma señor?" },
 
     { test: frase => coincideAND(frase, verbosSeleccionarBomba, objBomba1),
       mensajeMqtt: "selectbomba1", requiereManual: true, confirmar: "¿Selecciono la bomba uno de suministro, confirma señor?" },
@@ -3225,6 +3234,17 @@ document.addEventListener("DOMContentLoaded", () => {
     { test: frase => coincideAND(frase, palabrasTendencia, palabrasVariador2),
       accion: () => abrirTendencia(2), mensajeVoz: "Vamos a la tendencia de las bombas de suministro." }
   ];
+
+  // ---------- NUEVO: reset de alarma de variador por voz (pide la clave hablada, sin teclado) ----------
+  // Se detecta con un verbo de "resetear/limpiar" + la palabra alarma/falla + a qué variador se refiere.
+  const verbosReset = [
+    "resetea","resetear","resetealo","resetéalo","reset","reinicia","reiniciar","reinicialo","reinícialo",
+    "borra","borrar","borralo","bórralo","limpia","limpiar","limpialo","límpialo",
+    "quita","quitar","quitala","quítala","levanta","levantar","levantala","levántala"
+  ];
+  normalizarLista(verbosReset);
+  const palabrasAlarmaFalla = ["alarma","la alarma","falla","la falla"];
+  normalizarLista(palabrasAlarmaFalla);
 
   // ---------- Saber a qué variador (1 o 2) está viendo el usuario ahora mismo ----------
   // Se usa cuando dice "muéstrame la potencia" o "cárgame el histórico del 30 de agosto"
@@ -3405,6 +3425,49 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // ---------- NUEVO: extrae una clave numérica de lo que se escuchó, para el reset de alarma
+  // por voz. Admite dos formas de hablar: "1234" (el reconocedor a veces ya transcribe los
+  // números tal cual) o "uno dos tres cuatro" (dígito por palabra, más confiable al hablar). ----------
+  const mapaDigitosHablados = {
+    cero: "0", uno: "1", un: "1", dos: "2", tres: "3", cuatro: "4",
+    cinco: "5", seis: "6", siete: "7", ocho: "8", nueve: "9"
+  };
+  function extraerClaveDeVoz(frase) {
+    const digitosDirectos = frase.match(/\d/g);
+    if (digitosDirectos && digitosDirectos.length > 0) return digitosDirectos.join("");
+
+    let resultado = "";
+    frase.split(/\s+/).forEach(palabra => {
+      if (mapaDigitosHablados.hasOwnProperty(palabra)) resultado += mapaDigitosHablados[palabra];
+    });
+    return resultado;
+  }
+
+  // ---------- NUEVO: verifica la clave hablada contra HASH_CLAVE_RESET_FALLA (definida en el
+  // bloque de control/reset por teclado) y publica el reset si coincide. sha256() y
+  // HASH_CLAVE_RESET_FALLA son funciones/constantes globales ya definidas en otro <script>. ----------
+  function verificarYResetearPorVoz(clave) {
+    const nombreVar = variadorResetObjetivo === 1
+      ? "de la bomba sumergible"
+      : "de bombas de suministro";
+    const comando = comandoResetPendiente;
+
+    sha256(clave).then(hashIngresado => {
+      if (hashIngresado === HASH_CLAVE_RESET_FALLA) {
+        publicarMqtt(comando);
+        hablar("Alarma del variador " + nombreVar + " reseteada, señor.");
+      } else {
+        hablar("La clave es incorrecta, señor.");
+      }
+    }).catch(() => {
+      hablar("No se pudo verificar la clave, señor.");
+    });
+
+    esperandoClaveReset = false;
+    variadorResetObjetivo = null;
+    comandoResetPendiente = null;
+  }
+
   // ---------- IMPORTANTE: normalizamos TODAS las frases del diccionario (sin tildes,
   // minúsculas) porque normalizar() también le quita los acentos a lo que dice el
   // usuario antes de comparar. Si no hiciéramos esto, una frase como "préndeme" en el
@@ -3495,6 +3558,9 @@ document.addEventListener("DOMContentLoaded", () => {
     modoVoz = false;
     esperandoConfirmacion = false;
     comandoPendiente = null;
+    esperandoClaveReset = false;
+    variadorResetObjetivo = null;
+    comandoResetPendiente = null;
     salirVozBtn.style.display = "none";
     clearTimeout(timerInactividad);
     try { recog.stop(); } catch (e) {}
@@ -3535,6 +3601,28 @@ document.addEventListener("DOMContentLoaded", () => {
     const frase = normalizar(event.results[event.results.length - 1][0].transcript);
     console.log("🗣️ [Voz]", frase);
     resetInactividad();
+
+    // 0) NUEVO: si estamos esperando la clave hablada para resetear una alarma,
+    // esta frase SOLO puede ser la clave (o una cancelación).
+    if (esperandoClaveReset) {
+      if (esNo(frase) || contienePalabra(frase, "cancela") || contienePalabra(frase, "cancelar")) {
+        hablar("Cancelado, señor.");
+        esperandoClaveReset = false;
+        variadorResetObjetivo = null;
+        comandoResetPendiente = null;
+        return;
+      }
+      const clave = extraerClaveDeVoz(frase);
+      if (!clave) {
+        hablar("No entendí la clave, señor. Intente nuevamente diciendo resetear alarma.");
+        esperandoClaveReset = false;
+        variadorResetObjetivo = null;
+        comandoResetPendiente = null;
+        return;
+      }
+      verificarYResetearPorVoz(clave);
+      return;
+    }
 
     // 1) Si hay un comando esperando confirmación, esto SOLO puede ser sí/no
     if (esperandoConfirmacion) {
@@ -3634,6 +3722,27 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // 3c) NUEVO: reset de alarma de variador por voz ("resetea la alarma del variador sumergible",
+    // "borra la falla de suministro", etc.). Verbo de reset + palabra alarma/falla + variador.
+    // Si dice el verbo + alarma pero NO queda claro el variador, se pregunta cuál en vez de asumir.
+    {
+      const tieneVerboReset = verbosReset.some(v => contienePalabra(frase, v));
+      const tieneAlarmaFalla = palabrasAlarmaFalla.some(p => contienePalabra(frase, p));
+      if (tieneVerboReset && tieneAlarmaFalla) {
+        const nObjetivo = detectarVariadorObjetivo(frase);
+        if (!nObjetivo) {
+          hablar("¿De qué variador, señor? Diga sumergible o suministro.");
+          return;
+        }
+        variadorResetObjetivo = nObjetivo;
+        comandoResetPendiente = nObjetivo === 1 ? "resetfallavar1" : "resetfallavar2";
+        esperandoClaveReset = true;
+        const nombreVar = nObjetivo === 1 ? "de la bomba sumergible" : "de bombas de suministro";
+        hablar("Indique la clave para resetear la alarma del variador " + nombreVar + ", señor.");
+        return;
+      }
+    }
+
     // 4) Frecuencia (con confirmación)
     const cmdFreq = detectarComandoFrecuencia(frase);
     if (cmdFreq) {
@@ -3663,6 +3772,22 @@ document.addEventListener("DOMContentLoaded", () => {
           hablar("Pase primero al modo manual, señor.");
           return;
         }
+
+        // NUEVO: si el comando es arrancar/parar una bomba de suministro (bombaObjetivo 1 o 2)
+        // y estamos en modo MANUAL, verificamos que esa bomba ya esté seleccionada (h304Global/
+        // h305Global). Si no lo está, en vez de ejecutar el arranque/paro directo, se pregunta
+        // si se desea seleccionarla primero — más interactivo y evita comandos "al aire".
+        if (c.bombaObjetivo && modoManualActivo) {
+          const yaSeleccionada = c.bombaObjetivo === 1 ? (h304Global == 1) : (h305Global == 1);
+          if (!yaSeleccionada) {
+            const numeroHablado = nombreBombaSuministro[c.bombaObjetivo];
+            comandoPendiente = { mensajeMqtt: c.bombaObjetivo === 1 ? "selectbomba1" : "selectbomba2" };
+            esperandoConfirmacion = true;
+            hablar("La bomba " + numeroHablado + " de suministro no está seleccionada, señor. ¿Desea que la seleccione primero?");
+            return;
+          }
+        }
+
         comandoPendiente = { mensajeMqtt: c.mensajeMqtt };
         esperandoConfirmacion = true;
         hablar(c.confirmar);
