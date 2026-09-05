@@ -2987,35 +2987,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // como la respuesta a esa pregunta (antes se perdía y decía "no reconocí el comando").
   let esperandoVariadorReset = false;
 
-  // ---------- NUEVO: Edge TTS (voz neuronal real de Microsoft) vía el Worker de Cloudflare ----------
-  // Deja aquí la URL de tu Worker ya desplegado (la que te da Cloudflare, tipo
-  // "https://mi-worker.mi-usuario.workers.dev"). Si la dejas vacía, o si el Worker
-  // falla por cualquier motivo (sin internet, Microsoft bloqueó algo, etc.), el
-  // sistema usa automáticamente la voz nativa del navegador (hablarNativo) — nunca
-  // se queda mudo.
-  const EDGE_TTS_WORKER_URL = "https://dariza-voz-jarvis.freyricity123k.workers.dev/"; // <-- PEGA AQUÍ TU URL DE CLOUDFLARE WORKERS
-  const EDGE_TTS_VOZ = "es-MX-JorgeNeural"; // voz masculina neuronal en español latino
-  let audioEdgeActual = null;
-
-  function reproducirAudioEdgeTTS(blobUrl, callback) {
-    if (audioEdgeActual) {
-      try { audioEdgeActual.pause(); } catch (e) {}
-    }
-    const audio = new Audio(blobUrl);
-    audioEdgeActual = audio;
-
-    const terminar = () => {
-      URL.revokeObjectURL(blobUrl);
-      if (callback) callback();
-      if (modoVoz) {
-        setTimeout(() => { try { recog.start(); } catch (e) {} }, 250);
-      }
-    };
-    audio.onended = terminar;
-    audio.onerror = terminar;
-    audio.play().catch(terminar); // si el navegador bloquea el autoplay, igual seguimos el flujo
-  }
-
   // ---------- Elegir una voz masculina en español, si el navegador tiene alguna disponible ----------
   // El navegador no siempre trae la misma lista de voces (depende del sistema operativo), así
   // que probamos varios nombres típicos de voces masculinas en español y nos quedamos con la
@@ -3040,10 +3011,10 @@ document.addEventListener("DOMContentLoaded", () => {
   vozPreferida = elegirVozPreferida(); // por si las voces ya estaban cargadas
   speechSynthesis.onvoiceschanged = () => { vozPreferida = elegirVozPreferida(); };
 
-  // ---------- Voz de respuesta NATIVA (TTS del navegador) — se usa como respaldo si
-  // Edge TTS no está configurado o falla. Gratis y offline, pero calidad de "voz de
-  // sistema"; elegimos la más masculina disponible y bajamos el tono. ----------
-  function hablarNativo(texto, callback) {
+  // ---------- Voz de respuesta (TTS del navegador — nota: no es la voz real de Jarvis,
+  // eso requeriría un servicio de voz pagado; esta es la voz del sistema, gratis y offline,
+  // pero elegimos la más masculina disponible y bajamos el tono para acercarla a ese estilo) ----------
+  function hablar(texto, callback) {
     try {
       const u = new SpeechSynthesisUtterance(texto);
       u.lang = "es-ES";
@@ -3068,38 +3039,6 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => { try { recog.start(); } catch (e2) {} }, 250);
       }
     }
-  }
-
-  // ---------- NUEVO: punto de entrada único para hablar. Intenta primero la voz
-  // neuronal de Edge TTS (a través del Worker); si no hay URL configurada, si no hay
-  // internet, o si el Worker devuelve error (Microsoft cambió algo, etc.), cae solo
-  // a hablarNativo() sin que el resto del código note la diferencia. ----------
-  function hablar(texto, callback) {
-    if (!EDGE_TTS_WORKER_URL) {
-      hablarNativo(texto, callback);
-      return;
-    }
-
-    const controlador = new AbortController();
-    const timeoutId = setTimeout(() => controlador.abort(), 12000);
-
-    const url = EDGE_TTS_WORKER_URL + "?texto=" + encodeURIComponent(texto) + "&voz=" + encodeURIComponent(EDGE_TTS_VOZ);
-
-    fetch(url, { signal: controlador.signal })
-      .then(resp => {
-        clearTimeout(timeoutId);
-        if (!resp.ok) throw new Error("Worker respondió " + resp.status);
-        return resp.blob();
-      })
-      .then(blob => {
-        const blobUrl = URL.createObjectURL(blob);
-        reproducirAudioEdgeTTS(blobUrl, callback);
-      })
-      .catch(err => {
-        clearTimeout(timeoutId);
-        console.warn("Edge TTS no disponible, usando voz nativa:", err);
-        hablarNativo(texto, callback);
-      });
   }
 
   function normalizar(s) {
