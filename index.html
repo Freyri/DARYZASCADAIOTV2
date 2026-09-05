@@ -2982,6 +2982,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let esperandoClaveReset = false;
   let variadorResetObjetivo = null;   // 1 o 2
   let comandoResetPendiente = null;   // "resetfallavar1" | "resetfallavar2"
+  // NUEVO: cuando se dijo "resetea la alarma" pero no quedó claro el variador, se pregunta
+  // "¿cuál, sumergible o suministro?" y este estado hace que la SIGUIENTE frase se interprete
+  // como la respuesta a esa pregunta (antes se perdía y decía "no reconocí el comando").
+  let esperandoVariadorReset = false;
 
   // ---------- Elegir una voz masculina en español, si el navegador tiene alguna disponible ----------
   // El navegador no siempre trae la misma lista de voces (depende del sistema operativo), así
@@ -3455,17 +3459,23 @@ document.addEventListener("DOMContentLoaded", () => {
     sha256(clave).then(hashIngresado => {
       if (hashIngresado === HASH_CLAVE_RESET_FALLA) {
         publicarMqtt(comando);
-        hablar("Alarma del variador " + nombreVar + " reseteada, señor.");
+        hablar("Clave correcta. Reseteando alarma del variador " + nombreVar + ", señor.");
+        // Éxito: recién aquí se cierra el estado de espera.
+        esperandoClaveReset = false;
+        variadorResetObjetivo = null;
+        comandoResetPendiente = null;
       } else {
-        hablar("La clave es incorrecta, señor.");
+        // NUEVO: clave incorrecta → se mantiene esperando la clave (no hay que repetir
+        // "resetea alarma" desde cero); para salir de este bucle basta decir "cancela"
+        // o directamente pedir ir a otra pantalla (ver intentarEscapeNavegacion()).
+        hablar("La clave es incorrecta, señor. Intente de nuevo, o diga cancela para salir.");
       }
     }).catch(() => {
       hablar("No se pudo verificar la clave, señor.");
+      esperandoClaveReset = false;
+      variadorResetObjetivo = null;
+      comandoResetPendiente = null;
     });
-
-    esperandoClaveReset = false;
-    variadorResetObjetivo = null;
-    comandoResetPendiente = null;
   }
 
   // ---------- IMPORTANTE: normalizamos TODAS las frases del diccionario (sin tildes,
@@ -3559,6 +3569,7 @@ document.addEventListener("DOMContentLoaded", () => {
     esperandoConfirmacion = false;
     comandoPendiente = null;
     esperandoClaveReset = false;
+    esperandoVariadorReset = false;
     variadorResetObjetivo = null;
     comandoResetPendiente = null;
     salirVozBtn.style.display = "none";
@@ -3596,11 +3607,61 @@ document.addEventListener("DOMContentLoaded", () => {
   logo.addEventListener("mouseleave", cancelarPress);
   logo.addEventListener("contextmenu", (e) => e.preventDefault()); // evita menú "guardar imagen" al mantener presionado
 
+  // ---------- NUEVO: permite "escapar" de un estado de espera (pidiendo variador o clave
+  // para el reset de alarma) diciendo directamente un comando de navegación o "salir del
+  // modo de voz". Antes, mientras el sistema esperaba la clave, cualquier otra cosa que
+  // dijeras (por ejemplo "ve a monitoreo") se interpretaba como un intento de clave fallido
+  // y tocaba repetir el comando de reset desde cero para poder navegar de nuevo. Ahora esa
+  // frase se reconoce y se ejecuta de inmediato, cancelando el reset en curso. ----------
+  function intentarEscapeNavegacion(frase) {
+    if (comandosSalir.some(c => contienePalabra(frase, c))) {
+      hablar("Saliendo del modo de voz.", desactivarModoVoz);
+      return true;
+    }
+    for (const c of comandosNavegacion) {
+      if (c.frases.some(f => contienePalabra(frase, f))) {
+        if (c.accion) c.accion(); else showScreen(c.screen);
+        hablar((c.mensajeVoz || ("Vamos a " + c.nombre + ".")));
+        return true;
+      }
+    }
+    return false;
+  }
+
   // ---------- Procesar cada frase reconocida ----------
   recog.onresult = (event) => {
     const frase = normalizar(event.results[event.results.length - 1][0].transcript);
     console.log("🗣️ [Voz]", frase);
     resetInactividad();
+
+    // -1) NUEVO: si preguntamos "¿cuál variador, sumergible o suministro?" para el reset de
+    // alarma, esta frase SOLO puede ser esa respuesta (o una cancelación). Antes esto se perdía
+    // y la respuesta ("sumergible"/"suministro") caía como comando no reconocido.
+    if (esperandoVariadorReset) {
+      if (esNo(frase) || contienePalabra(frase, "cancela") || contienePalabra(frase, "cancelar")) {
+        hablar("Cancelado, señor.");
+        esperandoVariadorReset = false;
+        return;
+      }
+      // NUEVO: si en vez de responder "sumergible"/"suministro" el usuario dice
+      // "ve a monitoreo" o similar, salimos del reset y navegamos, en vez de insistir.
+      if (intentarEscapeNavegacion(frase)) {
+        esperandoVariadorReset = false;
+        return;
+      }
+      const nObjetivoRespuesta = detectarVariadorObjetivo(frase);
+      if (!nObjetivoRespuesta) {
+        hablar("No entendí, diga sumergible o suministro. O diga cancela para salir.");
+        return; // seguimos esperando la respuesta
+      }
+      esperandoVariadorReset = false;
+      variadorResetObjetivo = nObjetivoRespuesta;
+      comandoResetPendiente = nObjetivoRespuesta === 1 ? "resetfallavar1" : "resetfallavar2";
+      esperandoClaveReset = true;
+      const nombreVarResp = nObjetivoRespuesta === 1 ? "de la bomba sumergible" : "de bombas de suministro";
+      hablar("Indique la clave para resetear la alarma del variador " + nombreVarResp + ", señor.");
+      return;
+    }
 
     // 0) NUEVO: si estamos esperando la clave hablada para resetear una alarma,
     // esta frase SOLO puede ser la clave (o una cancelación).
@@ -3612,13 +3673,19 @@ document.addEventListener("DOMContentLoaded", () => {
         comandoResetPendiente = null;
         return;
       }
-      const clave = extraerClaveDeVoz(frase);
-      if (!clave) {
-        hablar("No entendí la clave, señor. Intente nuevamente diciendo resetear alarma.");
+      // NUEVO: mismo escape — si en vez de la clave dice "ve a monitoreo", "pantalla
+      // principal", etc., se cancela el reset y se navega, en vez de tratarlo como
+      // "clave incorrecta" y obligar a repetir el comando de reset para poder moverse.
+      if (intentarEscapeNavegacion(frase)) {
         esperandoClaveReset = false;
         variadorResetObjetivo = null;
         comandoResetPendiente = null;
         return;
+      }
+      const clave = extraerClaveDeVoz(frase);
+      if (!clave) {
+        hablar("No entendí la clave, señor. Diga la clave, o diga cancela para salir.");
+        return; // seguimos esperando la clave (no se pierde el intento de reset)
       }
       verificarYResetearPorVoz(clave);
       return;
@@ -3731,6 +3798,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (tieneVerboReset && tieneAlarmaFalla) {
         const nObjetivo = detectarVariadorObjetivo(frase);
         if (!nObjetivo) {
+          esperandoVariadorReset = true;
           hablar("¿De qué variador, señor? Diga sumergible o suministro.");
           return;
         }
