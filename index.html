@@ -1326,6 +1326,35 @@ body.tema-oscuro #logoContainer img {
      </button>
 </div>
 
+<!-- ========== PANTALLA: CONFIGURACIÓN DE VOZ DEL ASISTENTE ==========
+     Solo se llega aquí desde el botoncito 🎚️ que aparece junto al micrófono
+     (solo en la pantalla Principal, y solo con el modo de voz activo). ========== -->
+<div id="configVozScreen" class="screen" style="align-items:center; justify-content:center; background:#fff; font-family:Arial, sans-serif;">
+  <div style="width:75%; max-width:520px; background:#f7f9fc; border:1px solid #eef0f4; border-radius:1vw; padding:2.5vw; box-shadow:0 0.3vw 1.2vw rgba(0,0,0,0.12);">
+    <div style="font-size:1.6vw; font-weight:bold; color:#1a2b4c; margin-bottom:0.3vw; text-align:center;">🎙️ Configuración de Voz del Asistente</div>
+    <div style="font-size:0.85vw; color:#8a94a6; margin-bottom:1.8vw; text-align:center;">
+      Ajusta cómo suena la voz del asistente. Por defecto: Tono 1.00 · Velocidad 1.15.
+    </div>
+
+    <label style="font-size:0.95vw; font-weight:bold; color:#1a2b4c; display:flex; justify-content:space-between;">
+      <span>Tono</span><span id="vozConfigPitchValor">1.00</span>
+    </label>
+    <input id="vozConfigPitch" type="range" min="0" max="2" step="0.05" value="1" style="width:100%; margin:0.4vw 0 1.6vw;">
+
+    <label style="font-size:0.95vw; font-weight:bold; color:#1a2b4c; display:flex; justify-content:space-between;">
+      <span>Velocidad</span><span id="vozConfigRateValor">1.15</span>
+    </label>
+    <input id="vozConfigRate" type="range" min="0.5" max="1.8" step="0.05" value="1.15" style="width:100%; margin:0.4vw 0 2vw;">
+
+    <button id="vozConfigProbar" style="width:100%; padding:0.9vw; font-size:1.05vw; font-weight:bold; border:none; border-radius:0.5vw; background:#22a6b3; color:white; cursor:pointer; margin-bottom:1vw;">🔊 Probar voz</button>
+
+    <div style="display:flex; gap:1vw;">
+      <button id="vozConfigRegresar" style="flex:1; padding:0.9vw; font-size:1.05vw; font-weight:bold; border:none; border-radius:0.5vw; background:#8a94a6; color:white; cursor:pointer;">← Regresar</button>
+      <button id="vozConfigGuardar" style="flex:1; padding:0.9vw; font-size:1.05vw; font-weight:bold; border:none; border-radius:0.5vw; background:#0f62fe; color:white; cursor:pointer;">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ========== MODAL DE CONFIRMACIÓN CON CONTRASEÑA (RESET DE FALLA) ========== -->
 <div id="modalResetFalla" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
      background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
@@ -1532,7 +1561,8 @@ function showScreen(screenId) {
     "diagnosticoScreen",
     "alarmasScreen",
     "tendenciaScreen1",
-    "tendenciaScreen2"
+    "tendenciaScreen2",
+    "configVozScreen"
   ];
 
   screens.forEach(id => {
@@ -1543,10 +1573,10 @@ function showScreen(screenId) {
   document.getElementById(screenId).style.display = "flex";
 
   // La barra de navegación inferior no se muestra dentro de las gráficas de tendencia
-  // (se ocultaba a mano en abrirTendencia/regresarDesdeTendencia; ahora queda centralizado aquí).
+  // ni en la pantalla de configuración de voz (ambas tienen su propio botón "Regresar").
   const nav = document.getElementById("navButtons");
   if (nav) {
-    nav.style.display = (screenId === "tendenciaScreen1" || screenId === "tendenciaScreen2") ? "none" : "flex";
+    nav.style.display = (screenId === "tendenciaScreen1" || screenId === "tendenciaScreen2" || screenId === "configVozScreen") ? "none" : "flex";
   }
 }
 function activarPantallaCompleta() {
@@ -2972,6 +3002,25 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.body.appendChild(salirVozBtn);
 
+  // ---------- NUEVO: botón discreto para abrir la configuración de voz del asistente
+  // (tono y velocidad). Mismo estilo que salirVozBtn, justo debajo de él — igual que
+  // ese botón, solo aparece con el modo de voz activo y solo en la pantalla Principal. ----------
+  const configVozBtn = document.createElement("button");
+  configVozBtn.id = "configVozBtn";
+  configVozBtn.title = "Configurar voz del asistente";
+  configVozBtn.innerText = "🎚️";
+  configVozBtn.style.cssText =
+    "display:none; position:fixed; top:100px; left:14px; width:40px; height:40px;" +
+    "border-radius:50%; border:2px solid rgba(255,255,255,0.65);" +
+    "background:linear-gradient(135deg,#0f62fe,#00c2ff); color:#fff;" +
+    "font-size:1.15rem; cursor:pointer; z-index:100001; opacity:0.97;" +
+    "transition:transform 0.15s ease; align-items:center; justify-content:center;" +
+    "box-shadow:0 0 10px rgba(15,98,254,0.7);";
+  configVozBtn.addEventListener("mouseenter", () => { configVozBtn.style.transform = "scale(1.08)"; });
+  configVozBtn.addEventListener("mouseleave", () => { configVozBtn.style.transform = "scale(1)"; });
+  configVozBtn.addEventListener("click", () => { abrirConfigVoz(); });
+  document.body.appendChild(configVozBtn);
+
   let modoVoz = false;
   let esperandoConfirmacion = false;
   let comandoPendiente = null;     // { mensajeMqtt } para equipo, o { inputId, valor } para frecuencias/parámetros
@@ -2987,11 +3036,85 @@ document.addEventListener("DOMContentLoaded", () => {
   // como la respuesta a esa pregunta (antes se perdía y decía "no reconocí el comando").
   let esperandoVariadorReset = false;
 
+  // ---------- NUEVO: configuración de la voz del asistente (tono/velocidad), guardada en
+  // el navegador. Por defecto Tono 1.00 y Velocidad 1.15 (los valores que quedaron mejor
+  // probando). Se ajustan desde la pantalla de configuración (botón 🎚️ junto al micrófono,
+  // solo visible en la pantalla Principal con el modo de voz activo). ----------
+  const VOZ_CONFIG_KEY = "darizaVozConfig";
+  let vozConfigActual = { pitch: 1, rate: 1.15 };
+  function cargarVozConfigGuardada() {
+    try {
+      const guardado = JSON.parse(localStorage.getItem(VOZ_CONFIG_KEY) || "null");
+      if (guardado && typeof guardado.pitch === "number" && typeof guardado.rate === "number") {
+        vozConfigActual = guardado;
+      }
+    } catch (e) {}
+  }
+  function guardarVozConfigEnStorage() {
+    try { localStorage.setItem(VOZ_CONFIG_KEY, JSON.stringify(vozConfigActual)); } catch (e) {}
+  }
+  cargarVozConfigGuardada();
+
+  // ---------- NUEVO: pantalla de configuración de voz (sliders de Tono y Velocidad) ----------
+  const vozConfigPitchInput = document.getElementById("vozConfigPitch");
+  const vozConfigRateInput = document.getElementById("vozConfigRate");
+  const vozConfigPitchValor = document.getElementById("vozConfigPitchValor");
+  const vozConfigRateValor = document.getElementById("vozConfigRateValor");
+
+  function abrirConfigVoz() {
+    // Carga los sliders con los valores GUARDADOS actualmente (no valores a medio ajustar
+    // de una visita anterior sin guardar).
+    vozConfigPitchInput.value = vozConfigActual.pitch;
+    vozConfigRateInput.value = vozConfigActual.rate;
+    vozConfigPitchValor.textContent = vozConfigActual.pitch.toFixed(2);
+    vozConfigRateValor.textContent = vozConfigActual.rate.toFixed(2);
+    showScreen("configVozScreen");
+  }
+
+  vozConfigPitchInput.addEventListener("input", () => {
+    vozConfigPitchValor.textContent = parseFloat(vozConfigPitchInput.value).toFixed(2);
+  });
+  vozConfigRateInput.addEventListener("input", () => {
+    vozConfigRateValor.textContent = parseFloat(vozConfigRateInput.value).toFixed(2);
+  });
+
+  // "Probar voz": reproduce una frase de muestra con los valores de los sliders TAL COMO
+  // están en pantalla en este momento (aunque todavía no se hayan guardado), para poder
+  // escuchar el resultado antes de decidir si guardar o no.
+  document.getElementById("vozConfigProbar").addEventListener("click", () => {
+    try {
+      const u = new SpeechSynthesisUtterance("Hola, señor. Así sonaría mi voz con estos ajustes.");
+      u.lang = "es-ES";
+      u.pitch = parseFloat(vozConfigPitchInput.value);
+      u.rate = parseFloat(vozConfigRateInput.value);
+      if (vozPreferida) u.voice = vozPreferida;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  });
+
+  // "Guardar": aplica los valores de los sliders a la configuración real (vozConfigActual)
+  // y los deja guardados en el navegador para la próxima vez.
+  document.getElementById("vozConfigGuardar").addEventListener("click", () => {
+    vozConfigActual = {
+      pitch: parseFloat(vozConfigPitchInput.value),
+      rate: parseFloat(vozConfigRateInput.value)
+    };
+    guardarVozConfigEnStorage();
+    hablar("Configuración de voz guardada, señor.", () => showScreen("mainScreen"));
+  });
+
+  // "Regresar": vuelve a Principal SIN guardar cambios en los sliders (descarta el ajuste
+  // a medio hacer, igual que cancelar).
+  document.getElementById("vozConfigRegresar").addEventListener("click", () => {
+    showScreen("mainScreen");
+  });
+
   // ---------- Elegir una voz masculina en español, si el navegador tiene alguna disponible ----------
   // El navegador no siempre trae la misma lista de voces (depende del sistema operativo), así
   // que probamos varios nombres típicos de voces masculinas en español y nos quedamos con la
-  // primera que exista. Si no hay ninguna reconocida, igual bajamos un poco el tono (pitch)
-  // para que suene más grave, así sea con la voz femenina por defecto.
+  // primera que exista. Si no hay ninguna reconocida, igual el tono configurado ayuda a que
+  // suene más grave, así sea con la voz femenina por defecto.
   let vozPreferida = null;
   function elegirVozPreferida() {
     try {
@@ -3011,15 +3134,15 @@ document.addEventListener("DOMContentLoaded", () => {
   vozPreferida = elegirVozPreferida(); // por si las voces ya estaban cargadas
   speechSynthesis.onvoiceschanged = () => { vozPreferida = elegirVozPreferida(); };
 
-  // ---------- Voz de respuesta (TTS del navegador — nota: no es la voz real de Jarvis,
-  // eso requeriría un servicio de voz pagado; esta es la voz del sistema, gratis y offline,
-  // pero elegimos la más masculina disponible y bajamos el tono para acercarla a ese estilo) ----------
+  // ---------- Voz de respuesta (TTS del navegador, gratis y offline). Usa el tono y la
+  // velocidad configurados por el usuario (vozConfigActual), con los valores por defecto
+  // 1.00 / 1.15 si nunca los cambió. ----------
   function hablar(texto, callback) {
     try {
       const u = new SpeechSynthesisUtterance(texto);
       u.lang = "es-ES";
-      u.rate = 0.98;
-      u.pitch = 0.8; // más grave = más varonil
+      u.rate = vozConfigActual.rate;
+      u.pitch = vozConfigActual.pitch;
       if (vozPreferida) u.voice = vozPreferida;
       u.onend = () => {
         if (callback) callback();
@@ -3534,13 +3657,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }, MS_INACTIVIDAD);
   }
 
-  // ---------- El icono del micrófono solo se muestra en la pantalla PRINCIPAL ----------
-  // (con el modo de voz igual sigue activo en el resto de pantallas, solo se oculta el icono).
+  // ---------- El icono del micrófono (y el de configuración de voz) solo se muestran en
+  // la pantalla PRINCIPAL ----------
+  // (con el modo de voz igual sigue activo en el resto de pantallas, solo se ocultan los iconos).
   function actualizarVisibilidadBotonVoz() {
-    if (!modoVoz) { salirVozBtn.style.display = "none"; return; }
+    if (!modoVoz) {
+      salirVozBtn.style.display = "none";
+      configVozBtn.style.display = "none";
+      return;
+    }
     const main = document.getElementById("mainScreen");
     const enPrincipal = main && getComputedStyle(main).display !== "none";
     salirVozBtn.style.display = enPrincipal ? "flex" : "none";
+    configVozBtn.style.display = enPrincipal ? "flex" : "none";
   }
 
   // showScreen() es la única función (ya sea por botón, por abrirTendencia/regresarDesdeTendencia,
@@ -3573,6 +3702,7 @@ document.addEventListener("DOMContentLoaded", () => {
     variadorResetObjetivo = null;
     comandoResetPendiente = null;
     salirVozBtn.style.display = "none";
+    configVozBtn.style.display = "none";
     clearTimeout(timerInactividad);
     try { recog.stop(); } catch (e) {}
   }
